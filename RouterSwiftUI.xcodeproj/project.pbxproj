@@ -8,9 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		FB445BDB2FE2B18B00D80C30 /* RouterSwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB445BCF2FE2B18A00D80C30 /* RouterSwiftUI.framework */; };
+		FB9000102FE4000000000010 /* RouterSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FB9000112FE4000000000011 /* RouterSwiftUI */; };
+		FB9000302FE4000000000030 /* GeneratedRouteRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB9000312FE4000000000031 /* GeneratedRouteRegistry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		FB2947562FE3ED8000F344DF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FB445BC62FE2B18A00D80C30 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FB2947482FE3ED7F00F344DF;
+			remoteInfo = RouterExample;
+		};
+		FB2947602FE3ED8000F344DF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FB445BC62FE2B18A00D80C30 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FB2947482FE3ED7F00F344DF;
+			remoteInfo = RouterExample;
+		};
 		FB445BDC2FE2B18B00D80C30 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FB445BC62FE2B18A00D80C30 /* Project object */;
@@ -21,11 +37,30 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		FB2947492FE3ED7F00F344DF /* RouterExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RouterExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB2947552FE3ED8000F344DF /* RouterExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RouterExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB29475F2FE3ED8000F344DF /* RouterExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RouterExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB445BCF2FE2B18A00D80C30 /* RouterSwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RouterSwiftUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB445BDA2FE2B18B00D80C30 /* RouterSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RouterSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB9000312FE4000000000031 /* GeneratedRouteRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GeneratedRouteRegistry.swift; path = "$(DERIVED_FILE_DIR)/GeneratedRouteRegistry.swift"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FB29474A2FE3ED7F00F344DF /* RouterExample */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RouterExample;
+			sourceTree = "<group>";
+		};
+		FB2947582FE3ED8000F344DF /* RouterExampleTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RouterExampleTests;
+			sourceTree = "<group>";
+		};
+		FB2947622FE3ED8000F344DF /* RouterExampleUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RouterExampleUITests;
+			sourceTree = "<group>";
+		};
 		FB445BD12FE2B18A00D80C30 /* RouterSwiftUI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = RouterSwiftUI;
@@ -39,6 +74,28 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FB2947462FE3ED7F00F344DF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB9000102FE4000000000010 /* RouterSwiftUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB2947522FE3ED8000F344DF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB29475C2FE3ED8000F344DF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB445BCC2FE2B18A00D80C30 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -62,7 +119,11 @@
 			children = (
 				FB445BD12FE2B18A00D80C30 /* RouterSwiftUI */,
 				FB445BDE2FE2B18B00D80C30 /* RouterSwiftUITests */,
+				FB29474A2FE3ED7F00F344DF /* RouterExample */,
+				FB2947582FE3ED8000F344DF /* RouterExampleTests */,
+				FB2947622FE3ED8000F344DF /* RouterExampleUITests */,
 				FB445BD02FE2B18A00D80C30 /* Products */,
+				FBA060042FE40D99000D7325 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -71,8 +132,19 @@
 			children = (
 				FB445BCF2FE2B18A00D80C30 /* RouterSwiftUI.framework */,
 				FB445BDA2FE2B18B00D80C30 /* RouterSwiftUITests.xctest */,
+				FB2947492FE3ED7F00F344DF /* RouterExample.app */,
+				FB2947552FE3ED8000F344DF /* RouterExampleTests.xctest */,
+				FB29475F2FE3ED8000F344DF /* RouterExampleUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FBA060042FE40D99000D7325 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				FB9000312FE4000000000031 /* GeneratedRouteRegistry.swift */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -88,6 +160,76 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		FB2947482FE3ED7F00F344DF /* RouterExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB29476D2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExample" */;
+			buildPhases = (
+				FB9000322FE4000000000032 /* Generate RouterSwiftUI Registry */,
+				FB2947452FE3ED7F00F344DF /* Sources */,
+				FB2947462FE3ED7F00F344DF /* Frameworks */,
+				FB2947472FE3ED7F00F344DF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FB29474A2FE3ED7F00F344DF /* RouterExample */,
+			);
+			name = RouterExample;
+			packageProductDependencies = (
+				FB9000112FE4000000000011 /* RouterSwiftUI */,
+			);
+			productName = RouterExample;
+			productReference = FB2947492FE3ED7F00F344DF /* RouterExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FB2947542FE3ED8000F344DF /* RouterExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB29476E2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExampleTests" */;
+			buildPhases = (
+				FB2947512FE3ED8000F344DF /* Sources */,
+				FB2947522FE3ED8000F344DF /* Frameworks */,
+				FB2947532FE3ED8000F344DF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FB2947572FE3ED8000F344DF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FB2947582FE3ED8000F344DF /* RouterExampleTests */,
+			);
+			name = RouterExampleTests;
+			packageProductDependencies = (
+			);
+			productName = RouterExampleTests;
+			productReference = FB2947552FE3ED8000F344DF /* RouterExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FB29475E2FE3ED8000F344DF /* RouterExampleUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB29476F2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExampleUITests" */;
+			buildPhases = (
+				FB29475B2FE3ED8000F344DF /* Sources */,
+				FB29475C2FE3ED8000F344DF /* Frameworks */,
+				FB29475D2FE3ED8000F344DF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FB2947612FE3ED8000F344DF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FB2947622FE3ED8000F344DF /* RouterExampleUITests */,
+			);
+			name = RouterExampleUITests;
+			packageProductDependencies = (
+			);
+			productName = RouterExampleUITests;
+			productReference = FB29475F2FE3ED8000F344DF /* RouterExampleUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		FB445BCE2FE2B18A00D80C30 /* RouterSwiftUI */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FB445BE32FE2B18B00D80C30 /* Build configuration list for PBXNativeTarget "RouterSwiftUI" */;
@@ -144,6 +286,17 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					FB2947482FE3ED7F00F344DF = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					FB2947542FE3ED8000F344DF = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = FB2947482FE3ED7F00F344DF;
+					};
+					FB29475E2FE3ED8000F344DF = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = FB2947482FE3ED7F00F344DF;
+					};
 					FB445BCE2FE2B18A00D80C30 = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -161,6 +314,9 @@
 			);
 			mainGroup = FB445BC52FE2B18A00D80C30;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FB9000122FE4000000000012 /* XCLocalSwiftPackageReference "." */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FB445BD02FE2B18A00D80C30 /* Products */;
 			projectDirPath = "";
@@ -168,11 +324,35 @@
 			targets = (
 				FB445BCE2FE2B18A00D80C30 /* RouterSwiftUI */,
 				FB445BD92FE2B18B00D80C30 /* RouterSwiftUITests */,
+				FB2947482FE3ED7F00F344DF /* RouterExample */,
+				FB2947542FE3ED8000F344DF /* RouterExampleTests */,
+				FB29475E2FE3ED8000F344DF /* RouterExampleUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FB2947472FE3ED7F00F344DF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB2947532FE3ED8000F344DF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB29475D2FE3ED8000F344DF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB445BCD2FE2B18A00D80C30 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -189,7 +369,52 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		FB9000322FE4000000000032 /* Generate RouterSwiftUI Registry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate RouterSwiftUI Registry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/GeneratedRouteRegistry.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\nOUTPUT=\"${DERIVED_FILE_DIR}/GeneratedRouteRegistry.swift\"\nFILES=()\nwhile IFS= read -r file; do\n    FILES+=( \"$file\" )\ndone < <(/usr/bin/find \"${SRCROOT}/RouterExample\" -name \"*.swift\" ! -name \"GeneratedRouteRegistry.swift\" -print)\n\nSDKROOT=\"$(/usr/bin/xcrun --sdk macosx --show-sdk-path)\" /usr/bin/xcrun --sdk macosx swift run --package-path \"${SRCROOT}\" RouterSwiftUIGenerator --module RouterExample --runtime-import RouterSwiftUI --output \"${OUTPUT}\" \"${FILES[@]}\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		FB2947452FE3ED7F00F344DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB9000302FE4000000000030 /* GeneratedRouteRegistry.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB2947512FE3ED8000F344DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB29475B2FE3ED8000F344DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB445BCB2FE2B18A00D80C30 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -207,6 +432,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		FB2947572FE3ED8000F344DF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FB2947482FE3ED7F00F344DF /* RouterExample */;
+			targetProxy = FB2947562FE3ED8000F344DF /* PBXContainerItemProxy */;
+		};
+		FB2947612FE3ED8000F344DF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FB2947482FE3ED7F00F344DF /* RouterExample */;
+			targetProxy = FB2947602FE3ED8000F344DF /* PBXContainerItemProxy */;
+		};
 		FB445BDD2FE2B18B00D80C30 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FB445BCE2FE2B18A00D80C30 /* RouterSwiftUI */;
@@ -215,6 +450,158 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		FB2947672FE3ED8000F344DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FB2947682FE3ED8000F344DF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FB2947692FE3ED8000F344DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RouterExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RouterExample";
+			};
+			name = Debug;
+		};
+		FB29476A2FE3ED8000F344DF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RouterExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RouterExample";
+			};
+			name = Release;
+		};
+		FB29476B2FE3ED8000F344DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RouterExample;
+			};
+			name = Debug;
+		};
+		FB29476C2FE3ED8000F344DF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7727LS28TQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.speakerbox.RouterExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RouterExample;
+			};
+			name = Release;
+		};
 		FB445BE12FE2B18B00D80C30 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -356,6 +743,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -392,6 +780,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -455,6 +844,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FB29476D2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB2947672FE3ED8000F344DF /* Debug */,
+				FB2947682FE3ED8000F344DF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FB29476E2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB2947692FE3ED8000F344DF /* Debug */,
+				FB29476A2FE3ED8000F344DF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FB29476F2FE3ED8000F344DF /* Build configuration list for PBXNativeTarget "RouterExampleUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB29476B2FE3ED8000F344DF /* Debug */,
+				FB29476C2FE3ED8000F344DF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FB445BC92FE2B18A00D80C30 /* Build configuration list for PBXProject "RouterSwiftUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -483,6 +899,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FB9000122FE4000000000012 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FB9000112FE4000000000011 /* RouterSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FB9000122FE4000000000012 /* XCLocalSwiftPackageReference "." */;
+			productName = RouterSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FB445BC62FE2B18A00D80C30 /* Project object */;
 }
