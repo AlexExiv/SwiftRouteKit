@@ -10,35 +10,35 @@ public protocol Router: AnyObject
     var lockBack: Bool { get set }
 
     @discardableResult
-    func Route<Path: RoutePath>( _ path: Path ) -> ( any Router )?
+    func Route<Path: RoutePath>( _ path: Path ) -> (any Router)?
 
     @discardableResult
-    func Route( _ params: RouteParams ) -> ( any Router )?
+    func Route( _ params: RouteParams ) -> (any Router)?
 
     @discardableResult
-    func Route( url: String ) -> ( any Router )?
+    func Route( url: String ) -> (any Router)?
 
     @discardableResult
-    func RouteWithResult<Path: RoutePath, Result>( _ path: Path, result: @escaping ( Result ) -> Void ) -> ( any Router )?
+    func RouteWithResult<Path: RoutePath, Result>( _ path: Path, result: @escaping ( Result ) -> Void ) -> (any Router)?
 
     func RouteForResult<Path: RoutePath, Result>( _ path: Path ) async -> Result?
     func RouteForResults<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AsyncStream<Result>
     func RouteResultPublisher<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AnyPublisher<Result, Never>
 
     @discardableResult
-    func Replace<Path: RoutePath>( _ path: Path ) -> ( any Router )?
+    func Replace<Path: RoutePath>( _ path: Path ) -> (any Router)?
 
     @discardableResult
-    func Back() -> ( any Router )?
+    func Back() -> (any Router)?
 
     @discardableResult
-    func Close() -> ( any Router )?
+    func Close() -> (any Router)?
 
     @discardableResult
-    func CloseTo( key: String ) -> ( any Router )?
+    func CloseTo( key: String ) -> (any Router)?
 
     @discardableResult
-    func CloseToTop() -> ( any Router )?
+    func CloseToTop() -> (any Router)?
 
     func BindExecutor( _ executor: any CommandExecutor )
     func UnbindExecutor()
@@ -52,22 +52,17 @@ public final class RouterSimple: Router, ObservableObject
     public let commandBuffer = CommandBuffer()
     public let routerStack = RouterStack()
 
-    public private( set ) weak var parent: RouterSimple?
-    public private( set ) weak var routerTabs: RouterTabs?
-    public private( set ) var tabIndex: Int?
+    public private(set) weak var parent: RouterSimple?
+    public private(set) weak var routerTabs: RouterTabs?
+    public private(set) var tabIndex: Int?
 
     @Published
-    public private( set ) var viewStack = [RouteEntry]()
+    public private(set) var viewStack = [RouteEntry]()
 
     private var tabsByViewKey = [String: RouterTabs]()
     private var rootPath: AnyRoutePath?
 
-    public init(
-        registry: RouteRegistry,
-        parent: RouterSimple? = nil,
-        tabIndex: Int? = nil,
-        routerTabs: RouterTabs? = nil,
-        key: String = UUID().uuidString )
+    public init( registry: RouteRegistry, parent: RouterSimple? = nil, tabIndex: Int? = nil, routerTabs: RouterTabs? = nil, key: String = UUID().uuidString )
     {
         self.registry = registry
         self.parent = parent
@@ -119,7 +114,7 @@ public final class RouterSimple: Router, ObservableObject
         if let tabIndex = params.tabIndex
         {
             let tabs = tabsByViewKey[viewStack.last?.id ?? ""]
-            _ = tabs?.Route( tabIndex )
+            tabs?.Route( tabIndex )
             return tabs?.Router( for: tabIndex )
         }
 
@@ -161,7 +156,7 @@ public final class RouterSimple: Router, ObservableObject
                     continuation.resume( returning: nil )
                 } )
 
-            _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+            Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
         }
     }
 
@@ -179,7 +174,7 @@ public final class RouterSimple: Router, ObservableObject
                 resultStream.continuation.finish()
             } )
 
-        _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+        Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
 
         return resultStream.stream
     }
@@ -198,31 +193,31 @@ public final class RouterSimple: Router, ObservableObject
                 subject.send( completion: .finished )
             } )
 
-        _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+        Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
 
         return subject.eraseToAnyPublisher()
     }
 
     @discardableResult
-    public func Replace<Path: RoutePath>( _ path: Path ) -> ( any Router )?
+    public func Replace<Path: RoutePath>( _ path: Path ) -> (any Router)?
     {
         Route( RouteParams( path: path, isReplace: true ) )
     }
 
     @discardableResult
-    public func Back() -> ( any Router )?
+    public func Back() -> (any Router)?
     {
         CloseCurrent( checkLock: true, closeChain: false )
     }
 
     @discardableResult
-    public func Close() -> ( any Router )?
+    public func Close() -> (any Router)?
     {
         CloseCurrent( checkLock: false, closeChain: true )
     }
 
     @discardableResult
-    public func CloseTo( key: String ) -> ( any Router )?
+    public func CloseTo( key: String ) -> (any Router)?
     {
         if let index = viewStack.firstIndex( where: { $0.id == key } )
         {
@@ -238,7 +233,7 @@ public final class RouterSimple: Router, ObservableObject
         {
             if tabs.CloseTo( key: key )
             {
-                _ = CloseTo( key: ownerKey )
+                CloseTo( key: ownerKey )
                 return tabs.selectedRouter
             }
         }
@@ -257,15 +252,31 @@ public final class RouterSimple: Router, ObservableObject
     {
         if parent == nil
         {
-            guard let first = viewStack.first else { return self }
-
-            Remove( entries: Array( viewStack.dropFirst() ) )
-            commandBuffer.Apply( .closeTo( first.id ) )
-            return self
+            return Close( toIndex: 0 )
         }
 
         ReleaseAllEntries()
         return parent?.CloseToTop()
+    }
+
+    @discardableResult
+    func Close( toIndex: Int ) -> RouterSimple
+    {
+        if !viewStack.indices.contains( toIndex )
+        {
+            return self
+        }
+
+        let entry = viewStack[toIndex]
+        let entries = Array( viewStack.suffix( from: toIndex + 1 ) )
+        if entries.isEmpty
+        {
+            return self
+        }
+
+        Remove( entries: entries )
+        commandBuffer.Apply( .closeTo( entry.id ) )
+        return self
     }
 
     public func BindExecutor( _ executor: any CommandExecutor )
@@ -325,9 +336,7 @@ public final class RouterSimple: Router, ObservableObject
         viewStack.removeAll { ids.contains( $0.id ) }
     }
 
-    func TryRouteMiddlewares(
-        next: RouteParams,
-        targetController: any AnyRouteController ) -> Bool
+    func TryRouteMiddlewares( next: RouteParams, targetController: any AnyRouteController ) -> Bool
     {
         if let current = viewStack.last
         {
@@ -498,7 +507,7 @@ public final class RouterSimple: Router, ObservableObject
     {
         while let last = viewStack.last, last.presentationStyle.isNoStackPresentation
         {
-            _ = Close()
+            Close()
         }
     }
 
@@ -544,11 +553,16 @@ public final class RouterSimple: Router, ObservableObject
     {
         guard let tabs = routerTabs else { return false }
 
-        return tabs.tabRouteInParent || controller.presentationStyle.isNoStackPresentation
+        return (tabs.tabRouteInParent && viewStack.isEmpty == false) || controller.presentationStyle.isNoStackPresentation
     }
 
     private func TryRouteToExistingTab( path: AnyRoutePath ) -> RouterSimple?
     {
+        if viewStack.isEmpty == false, let routerTabs, let router = routerTabs.RouteToRootIfNeeded( path: path )
+        {
+            return router
+        }
+
         guard let tabs = tabsByViewKey[viewStack.last?.id ?? ""] else { return nil }
 
         return tabs.RouteToRootIfNeeded( path: path )

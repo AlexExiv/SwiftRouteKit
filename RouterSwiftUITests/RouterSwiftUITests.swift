@@ -446,6 +446,34 @@ struct RouterSwiftUITests
     }
 
     @Test
+    func TabRootsAreRegisteredBeforeTabSelection(   ) throws
+    {
+        let router = MakeRouter(   )
+        router.Route(    TestTabsPath(   ) )
+        let tabsEntry = try #require(    router.viewStack.last )
+        let tabs = router.CreateTabs(
+            viewKey: tabsEntry.id,
+            descriptors: [
+                RouterTabDescriptor(    id: "a", index: 0, title: "A", rootPath: TestTabAPath(   ) ),
+                RouterTabDescriptor(    id: "b", index: 1, title: "B", rootPath: TestTabBPath(   ) )
+            ] )
+
+        tabs.Route(    0, path: TestTabAPath(   ) )
+        tabs.Route(    1, path: TestTabBPath(   ) )
+
+        #expect(    tabs.Router(    for: 0 ).viewStack.count == 1 )
+        #expect(    tabs.Router(    for: 1 ).viewStack.count == 1 )
+
+        _ = tabs.Route(    0 )
+        tabs.Router(    for: 0 ).Route(    TestTabBPath(   ) )
+
+        #expect(    tabs.tabIndex == 1 )
+        #expect(    tabs.Router(    for: 0 ).viewStack.count == 1 )
+        #expect(    tabs.Router(    for: 0 ).viewStack.last?.path.Typed(    TestTabAPath.self ) != nil )
+        #expect(    tabs.Router(    for: 1 ).viewStack.last?.path.Typed(    TestTabBPath.self ) != nil )
+    }
+
+    @Test
     func MiddlewareRedirectAndGlobalMiddleware(   ) throws
     {
         TestAuthMiddleware.allowSecure = false

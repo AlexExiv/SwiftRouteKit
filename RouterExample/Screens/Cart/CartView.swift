@@ -10,6 +10,7 @@ import RouterSwiftUI
 
 struct CartView<ViewModel: CartViewModel>: RouterView
 {
+    @Environment( \.router ) private var router
     @StateObject private var viewModel: ViewModel
     
     init( viewModel: ViewModel )
@@ -39,6 +40,10 @@ struct CartView<ViewModel: CartViewModel>: RouterView
     {
         CartItemRowView(
             item: item,
+            onSelect:
+            {
+                router.Route( FlowerDetailPath( flowerID: item.flower.id ) )
+            },
             onIncrease:
             {
                 viewModel.Increase( item: item )
@@ -77,6 +82,7 @@ private struct EmptyCartView: View
 private struct CartItemRowView: View
 {
     let item: CartItem
+    let onSelect: () -> Void
     let onIncrease: () -> Void
     let onDecrease: () -> Void
     
@@ -84,18 +90,25 @@ private struct CartItemRowView: View
     {
         HStack( alignment: .center, spacing: 12 )
         {
-            VStack( alignment: .leading, spacing: 6 )
+            Button
             {
-                Text( item.flower.name )
-                    .font( .headline )
-                
-                Text( item.flower.shortDescription )
-                    .font( .subheadline )
-                    .foregroundStyle( .secondary )
-                    .lineLimit( 2 )
+                onSelect()
+            } label:
+            {
+                VStack( alignment: .leading, spacing: 6 )
+                {
+                    Text( item.flower.name )
+                        .font( .headline )
+                    
+                    Text( item.flower.shortDescription )
+                        .font( .subheadline )
+                        .foregroundStyle( .secondary )
+                        .lineLimit( 2 )
+                }
+                .frame( maxWidth: .infinity, alignment: .leading )
+                .contentShape( Rectangle() )
             }
-            
-            Spacer( minLength: 8 )
+            .buttonStyle( .plain )
             
             HStack( spacing: 10 )
             {
