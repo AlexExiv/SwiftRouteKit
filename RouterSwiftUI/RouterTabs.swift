@@ -36,7 +36,7 @@ public final class RouterTabs: ObservableObject
 
     public private(set) var descriptors: [RouterTabDescriptor]
 
-    private var routers = [Int: RouterSimple]()
+    private var routers = [Int: RouterTabSimple]()
 
     init( parent: RouterSimple, viewKey: String, descriptors: [RouterTabDescriptor], tabRouteInParent: Bool, backToFirst: Bool, tabUnique: RouteTabUnique )
     {
@@ -48,7 +48,7 @@ public final class RouterTabs: ObservableObject
         self.tabUnique = tabUnique
     }
 
-    public var selectedRouter: RouterSimple
+    public var selectedRouter: RouterTabSimple
     {
         Router( for: tabIndex )
     }
@@ -58,32 +58,32 @@ public final class RouterTabs: ObservableObject
         self.descriptors = descriptors.sorted { $0.index < $1.index }
     }
 
-    public func Router( for descriptor: RouterTabDescriptor ) -> RouterSimple
+    public func Router( for descriptor: RouterTabDescriptor ) -> RouterTabSimple
     {
         Router( for: descriptor.index )
     }
 
-    public func Router( for index: Int ) -> RouterSimple
+    public func Router( for index: Int ) -> RouterTabSimple
     {
         if let router = routers[index]
         {
             return router
         }
 
-        let router = RouterSimple( registry: parent.registry, parent: parent, tabIndex: index, routerTabs: self )
+        let router = RouterTabSimple( registry: parent.registry, parent: parent, tabIndex: index, routerTabs: self )
         routers[index] = router
         
         return router
     }
 
     @discardableResult
-    public func Route<Path: RoutePath>( _ index: Int, path: Path, recreate: Bool = false ) -> RouterSimple
+    public func Route<Path: RoutePath>( _ index: Int, path: Path, recreate: Bool = false ) -> RouterTabSimple
     {
         Route( index, path: AnyRoutePath( path ), recreate: recreate )
     }
 
     @discardableResult
-    public func Route( _ index: Int, path: AnyRoutePath, recreate: Bool = false ) -> RouterSimple
+    public func Route( _ index: Int, path: AnyRoutePath, recreate: Bool = false ) -> RouterTabSimple
     {
         let router = Router( for: index )
 
@@ -135,7 +135,7 @@ public final class RouterTabs: ObservableObject
         guard Route( descriptor.index ) else { return nil }
 
         let router = Route( descriptor.index, path: descriptor.rootPath )
-        router.Close( toIndex: 0 )
+        router.CloseTabToTop()
         
         return router
     }

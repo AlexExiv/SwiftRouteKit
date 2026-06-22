@@ -64,9 +64,7 @@ public struct RouterTabsHost<Label: View>: View
 
     private func TabContent( _ descriptor: RouterTabDescriptor, tabs: RouterTabs ) -> some View
     {
-        AnyRouterHost(
-            router: tabs.Router( for: descriptor ),
-            rootPath: descriptor.rootPath )
+        AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
             .tabItem { label( descriptor ) }
             .tag( descriptor.index )
     }
@@ -101,20 +99,10 @@ private final class RouterTabsHostState: ObservableObject
 
 public extension RouterTabsHost where Label == SwiftUI.Label<Text, Image>
 {
-    init(
-        descriptors: [RouterTabDescriptor],
-        tabRouteInParent: Bool = false,
-        backToFirst: Bool = true,
-        tabUnique: RouteTabUnique = .class )
+    init( descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class )
     {
-        self.init(
-            descriptors: descriptors,
-            tabRouteInParent: tabRouteInParent,
-            backToFirst: backToFirst,
-            tabUnique: tabUnique ) {
-                Label(
-                    $0.title,
-                    systemImage: $0.systemImage ?? "circle" )
+        self.init( descriptors: descriptors, tabRouteInParent: tabRouteInParent, backToFirst: backToFirst, tabUnique: tabUnique ) {
+                Label( $0.title, systemImage: $0.systemImage ?? "circle" )
             }
     }
 }

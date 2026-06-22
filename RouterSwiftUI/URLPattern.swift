@@ -16,7 +16,8 @@ public struct RouteURLPattern
     public init( _ rawValue: String ) throws
     {
         guard rawValue.isEmpty == false, rawValue.first == "/" else
-        {            throw RouterError.invalidURI( rawValue )
+        {
+            throw RouterError.invalidURI( rawValue )
         }
 
         var names = [String]()

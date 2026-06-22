@@ -45,7 +45,7 @@ public protocol Router: AnyObject
 }
 
 @MainActor
-public final class RouterSimple: Router, ObservableObject
+public class RouterSimple: Router, ObservableObject
 {
     public let key: String
     public let registry: RouteRegistry
@@ -53,23 +53,12 @@ public final class RouterSimple: Router, ObservableObject
     public let routerStack = RouterStack()
 
     public private(set) weak var parent: RouterSimple?
-    public private(set) weak var routerTabs: RouterTabs?
-    public private(set) var tabIndex: Int?
 
     @Published
     public private(set) var viewStack = [RouteEntry]()
 
     private var tabsByViewKey = [String: RouterTabs]()
     private var rootPath: AnyRoutePath?
-
-    public init( registry: RouteRegistry, parent: RouterSimple? = nil, tabIndex: Int? = nil, routerTabs: RouterTabs? = nil, key: String = UUID().uuidString )
-    {
-        self.registry = registry
-        self.parent = parent
-        self.tabIndex = tabIndex
-        self.routerTabs = routerTabs
-        self.key = key
-    }
 
     public var topRouter: ( any Router )?
     {
@@ -95,6 +84,13 @@ public final class RouterSimple: Router, ObservableObject
     public var rootRouter: RouterSimple
     {
         parent?.rootRouter ?? self
+    }
+
+    public init( registry: RouteRegistry, parent: RouterSimple? = nil, key: String = UUID().uuidString )
+    {
+        self.registry = registry
+        self.parent = parent
+        self.key = key
     }
 
     @discardableResult
@@ -383,13 +379,11 @@ public final class RouterSimple: Router, ObservableObject
     }
 
     @discardableResult
-    private func Route( params: RouteParams, controller: any AnyRouteController, replace: Bool ) -> ( any Router )?
+    func Route( params: RouteParams, controller: any AnyRouteController, replace: Bool ) -> ( any Router )?
     {
-        if routerTabs != nil, ShouldRouteInParent( controller: controller )
+        if ShouldRouteInParent( controller: controller )
         {
-            guard let parent else { return nil }
-
-            return parent.Route( params: params, controller: controller, replace: replace )
+            return RouteInParent( params: params, controller: controller, replace: replace )
         }
 
         if TryRouteMiddlewares( next: params, targetController: controller )
@@ -485,11 +479,6 @@ public final class RouterSimple: Router, ObservableObject
 
         guard checkLock == false || lockBack == false else { return self }
 
-        if let tabs = routerTabs, viewStack.count <= 1
-        {
-            return tabs.CloseFromTab( index: tabIndex ?? 0 )
-        }
-
         guard let entry = viewStack.popLast() else { return ThisOrParent() }
 
         CleanupRemovedEntry( entry )
@@ -549,20 +538,18 @@ public final class RouterSimple: Router, ObservableObject
         Remove( entries: removedEntries )
     }
 
-    private func ShouldRouteInParent( controller: any AnyRouteController ) -> Bool
+    func ShouldRouteInParent( controller: any AnyRouteController ) -> Bool
     {
-        guard let tabs = routerTabs else { return false }
-
-        return (tabs.tabRouteInParent && viewStack.isEmpty == false) || controller.presentationStyle.isNoStackPresentation
+        false
     }
 
-    private func TryRouteToExistingTab( path: AnyRoutePath ) -> RouterSimple?
+    func RouteInParent( params: RouteParams, controller: any AnyRouteController, replace: Bool ) -> ( any Router )?
     {
-        if viewStack.isEmpty == false, let routerTabs, let router = routerTabs.RouteToRootIfNeeded( path: path )
-        {
-            return router
-        }
+        parent?.Route( params: params, controller: controller, replace: replace )
+    }
 
+    func TryRouteToExistingTab( path: AnyRoutePath ) -> RouterSimple?
+    {
         guard let tabs = tabsByViewKey[viewStack.last?.id ?? ""] else { return nil }
 
         return tabs.RouteToRootIfNeeded( path: path )
