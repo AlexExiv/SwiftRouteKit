@@ -15,7 +15,7 @@ public struct RouteURLPattern
 
     public init( _ rawValue: String ) throws
     {
-        guard rawValue.isEmpty == false, rawValue.first == "/" else
+        if rawValue.isEmpty || rawValue.first != "/"
         {
             throw RouterError.invalidURI( rawValue )
         }
@@ -30,8 +30,9 @@ public struct RouteURLPattern
             if value.hasPrefix( ":" )
             {
                 let name = String( value.dropFirst() )
-                guard name.isEmpty == false, names.contains( name ) == false else
-                {                    throw RouterError.invalidURI( rawValue )
+                if name.isEmpty || names.contains( name )
+                {
+                    throw RouterError.invalidURI( rawValue )
                 }
 
                 names.append( name )
@@ -54,7 +55,7 @@ public struct RouteURLPattern
         let path = components?.path ?? url.split( separator: "?", maxSplits: 1 ).first.map( String.init ) ?? url
         let actualSegments = path.split( separator: "/" ).map( String.init )
 
-        guard actualSegments.count == segments.count else { return nil }
+        if actualSegments.count != segments.count { return nil }
 
         var parameters = [String: String]()
         for ( pattern, actual ) in zip( segments, actualSegments )
@@ -69,9 +70,7 @@ public struct RouteURLPattern
         }
 
         var query = [String: String]()
-        components?.queryItems?.forEach {
-            query[$0.name] = $0.value ?? ""
-        }
+        components?.queryItems?.forEach { query[$0.name] = $0.value ?? "" }
 
         return RouteURLMatch( parameters: parameters, query: query )
     }
@@ -83,7 +82,6 @@ public struct RouteURLPattern
 
     private enum Segment
     {
-        case literal( String )
-        case parameter( String )
+        case literal( String ), parameter( String )
     }
 }
