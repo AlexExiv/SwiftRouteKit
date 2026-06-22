@@ -16,7 +16,7 @@ public struct RouterHost<RootPath: RoutePath>: View
 
     public var body: some View
     {
-        NavigationStack( path: navigator.stackBinding ) {
+        NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
             RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
                 .navigationDestination( for: RouteEntry.self ) {
                     RouterEntryView( entry: $0 )
@@ -87,7 +87,21 @@ public struct RouterEntryView: View
         self.entry = entry
     }
 
+    @ViewBuilder
     public var body: some View
+    {
+        if let router = entry.router
+        {
+            Content()
+                .environment( \.router, router )
+        }
+        else
+        {
+            Content()
+        }
+    }
+
+    private func Content() -> some View
     {
         Group {
             if let view = try? entry.controller.MakeView( entry: entry )
@@ -130,7 +144,7 @@ private struct _AnyRouterHost: View
 
     var body: some View
     {
-        NavigationStack( path: navigator.stackBinding ) {
+        NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
             Group {
                 if let root = navigator.root
                 {
@@ -158,7 +172,7 @@ private struct _AnyRouterHost: View
             router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
             if let rootPath, router.isEmpty
             {
-                _ = router.Route( path: rootPath, resultBinding: nil, replace: false )
+                router.Route( RouteParams( path: rootPath ) )
             }
         }
         .onDisappear {
@@ -192,4 +206,25 @@ private extension View
         }
         #endif
     }
+}
+
+@MainActor
+private func RouterStackBinding( navigator: SwiftUINavigator, router: RouterSimple ) -> Binding<[RouteEntry]>
+{
+    Binding(
+        get: { navigator.stack },
+        set: {
+            let removedCount = navigator.stack.count - $0.count
+            if removedCount <= 0
+            {
+                navigator.stack = $0
+            }
+            else
+            {
+                for _ in 0..<removedCount
+                {
+                    router.Back()
+                }
+            }
+        } )
 }

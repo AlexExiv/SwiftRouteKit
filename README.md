@@ -161,13 +161,45 @@ Open deeplinks through the generated registry:
 router.Route( url: "/profile/42?source=push" )
 ```
 
-Route with a result callback:
+Route with callback results:
 
 ```swift
-router.RouteWithResult( EditProfilePath( id: 42 ) ) { result in
-    print( "Profile changed: \(result)" )
+router.RouteWithResult( EditProfilePath( id: 42 ) ) { ( event: EditProfileEvent ) in
+    print( "Profile changed: \(event)" )
 }
 ```
+
+Wait for the first result:
+
+```swift
+let result: EditProfileEvent? = await router.RouteForResult( EditProfilePath( id: 42 ) )
+```
+
+Read many results as `AsyncStream`:
+
+```swift
+for await event in router.RouteForResults( EditProfilePath( id: 42 ), as: EditProfileEvent.self )
+{
+    print( "Profile event: \(event)" )
+}
+```
+
+Use Combine when publisher composition is needed:
+
+```swift
+let cancellable = router.RouteResultPublisher( EditProfilePath( id: 42 ), as: EditProfileEvent.self )
+    .sink { event in
+        print( "Profile event: \(event)" )
+    }
+```
+
+The opened screen sends values through its `ResultProvider`:
+
+```swift
+resultProvider?.Send( EditProfileEvent.changed )
+```
+
+The route result channel is owned by the route lifetime. User code sends values only; it does not close the channel manually.
 
 The router owns route logic only. SwiftUI state lives in `RouterHost` through `SwiftUINavigator`, and commands are delivered through `CommandBuffer` and `SwiftUICommandExecutor`.
 
@@ -418,10 +450,13 @@ Use `@UseMiddlewares( ... )` on a route controller. Local middleware runs in the
 ```swift
 import RouterSwiftUI
 
-struct LoginPath: RoutePath, EmptyParamsPath
+struct LoginPath: RoutePath
 {
-    init()
+    let next: RouteParams
+
+    init( next: RouteParams )
     {
+        self.next = next
     }
 }
 
@@ -437,7 +472,7 @@ final class AuthMiddleware: MiddlewareController
     {
         guard next.path.Typed( ProfilePath.self ) != nil, Self.isAuthorized == false else { return false }
 
-        router.Route( LoginPath() )
+        router.Route( LoginPath( next: next ) )
         return true
     }
 }
@@ -462,6 +497,19 @@ Middleware callbacks:
 - `OnClose`: called before closing the current route.
 
 Return `true` to stop the current navigation. This is useful when middleware redirects to another route.
+
+When middleware redirects, keep `next` if the original route must be repeated after the redirect. `RouteParams` carries the result owner, so callbacks, `await`, `AsyncStream`, and Combine publishers stay connected.
+
+```swift
+final class LoginViewModel: RouterViewModel
+{
+    func OnLoginFinished( path: LoginPath )
+    {
+        router?.Close()
+        router?.Route( path.next )
+    }
+}
+```
 
 ## Global Middleware
 

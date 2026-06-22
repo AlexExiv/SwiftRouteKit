@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import Testing
 @testable import RouterSwiftUI
@@ -101,6 +102,18 @@ struct TestPartialViewFactoryPath: RoutePath, EmptyParamsPath
     }
 }
 
+struct TestGatePath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct TestGateTargetPath: RoutePath, EmptyParamsPath
+{
+    init()
+    {
+    }
+}
+
 struct TestTextView: RouterView
 {
     let text: String
@@ -183,6 +196,23 @@ final class TestAuthMiddleware: MiddlewareController
         guard next.path.Typed(    TestSecurePath.self ) != nil, Self.allowSecure == false else { return false }
 
         router.Route(    TestLoginPath(   ) )
+        return true
+    }
+}
+
+final class TestGateMiddleware: MiddlewareController
+{
+    static var allow = false
+
+    init()
+    {
+    }
+
+    func OnRoute( router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
+    {
+        guard next.path.Typed( TestGateTargetPath.self ) != nil, Self.allow == false else { return false }
+
+        router.Route( TestGatePath( next: next ) )
         return true
     }
 }
@@ -328,6 +358,25 @@ final class TestPartialViewFactoryController: RouteControllerVM<TestPartialViewF
     {
         viewModel.title = "Manual View"
         return TestGeneratedVMView(    viewModel: viewModel )
+    }
+}
+
+@Route( uri: "/gate" )
+final class TestGateController: RouteController<TestGatePath, TestTextView>
+{
+    override func OnCreateView( path: TestGatePath ) -> TestTextView
+    {
+        TestTextView( text: "Gate" )
+    }
+}
+
+@Route( uri: "/gate-target" )
+@UseMiddlewares( TestGateMiddleware.self )
+final class TestGateTargetController: RouteController<TestGateTargetPath, TestTextView>
+{
+    override func OnCreateView( path: TestGateTargetPath ) -> TestTextView
+    {
+        TestTextView( text: "Gate Target" )
     }
 }
 
@@ -486,6 +535,177 @@ struct RouterSwiftUITests
         router.Route( TestBottomSheetPath() )
         #expect( navigator.sheet == nil )
         #expect( navigator.bottomSheet?.path.Typed( TestBottomSheetPath.self ) != nil )
+    }
+
+    @Test
+    func RouteResultCallbackReceivesValuesUntilClose() throws
+    {
+        let router = MakeRouter()
+        let navigator = SwiftUINavigator()
+        var values = [String]()
+
+        router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+        router.Route( TestHomePath() )
+        router.RouteWithResult( TestSettingsPath( section: "callback" ) ) { values.append( $0 ) }
+
+        var entry = try #require( router.viewStack.last )
+        entry.resultProvider.Send( "one" )
+        entry.resultProvider.Send( "two" )
+        router.Close()
+        entry = router.viewStack.first!
+
+        #expect( values == ["one", "two"] )
+    }
+
+    @Test
+    func RouteForResultReturnsFirstValue() async throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+
+        let task = Task { @MainActor in
+            await router.RouteForResult( TestSettingsPath( section: "await" ) ) as String?
+        }
+
+        await Task.yield()
+
+        let entry = try #require( router.viewStack.last )
+        entry.resultProvider.Send( "first" )
+        entry.resultProvider.Send( "second" )
+
+        let result = await task.value
+        #expect( result == "first" )
+    }
+
+    @Test
+    func RouteForResultReturnsNilWhenClosed() async throws
+    {
+        let router = MakeRouter()
+        let navigator = SwiftUINavigator()
+
+        router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+        router.Route( TestHomePath() )
+
+        let task = Task { @MainActor in
+            await router.RouteForResult( TestSettingsPath( section: "await-close" ) ) as String?
+        }
+
+        await Task.yield()
+
+        router.Close()
+
+        let result = await task.value
+        #expect( result == nil )
+    }
+
+    @Test
+    func RouteForResultsFinishesWhenClosed() async throws
+    {
+        let router = MakeRouter()
+        let navigator = SwiftUINavigator()
+
+        router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+        router.Route( TestHomePath() )
+
+        let stream = router.RouteForResults( TestSettingsPath( section: "stream" ), as: String.self )
+        var entry = try #require( router.viewStack.last )
+
+        entry.resultProvider.Send( "one" )
+        entry.resultProvider.Send( "two" )
+        router.Close()
+        entry = router.viewStack.first!
+
+        var iterator = stream.makeAsyncIterator()
+        let first = await iterator.next()
+        let second = await iterator.next()
+        let end = await iterator.next()
+
+        #expect( first == "one" )
+        #expect( second == "two" )
+        #expect( end == nil )
+    }
+
+    @Test
+    func RouteResultPublisherFinishesWhenClosed() throws
+    {
+        let router = MakeRouter()
+        let navigator = SwiftUINavigator()
+        var values = [String]()
+        var finished = false
+        var cancellables = Set<AnyCancellable>()
+
+        router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+        router.Route( TestHomePath() )
+        router.RouteResultPublisher( TestSettingsPath( section: "publisher" ), as: String.self )
+            .sink(
+                receiveCompletion: {
+                    if case .finished = $0
+                    {
+                        finished = true
+                    }
+                },
+                receiveValue: { values.append( $0 ) } )
+            .store( in: &cancellables )
+
+        var entry = try #require( router.viewStack.last )
+        entry.resultProvider.Send( "one" )
+        entry.resultProvider.Send( "two" )
+        router.Close()
+        entry = router.viewStack.first!
+
+        #expect( values == ["one", "two"] )
+        #expect( finished )
+        #expect( cancellables.isEmpty == false )
+    }
+
+    @Test
+    func RouteForResultReturnsNilWhenNavigatorRemovesEntry() async throws
+    {
+        let router = MakeRouter()
+        let navigator = SwiftUINavigator()
+
+        router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+        router.Route( TestHomePath() )
+
+        let task = Task { @MainActor in
+            await router.RouteForResult( TestSettingsPath( section: "sync-close" ) ) as String?
+        }
+
+        await Task.yield()
+
+        navigator.stack = []
+        router.SyncVisibleEntries( navigator.visibleEntryIDs )
+
+        let result = await task.value
+        #expect( result == nil )
+    }
+
+    @Test
+    func MiddlewarePreservesRouteResultForRetry() throws
+    {
+        TestGateMiddleware.allow = false
+
+        let router = MakeRouter()
+        var values = [String]()
+
+        router.Route( TestHomePath() )
+        router.RouteWithResult( TestGateTargetPath() ) { values.append( $0 ) }
+
+        let gateEntry = try #require( router.viewStack.last )
+        let gatePath = try #require( gateEntry.path.Typed( TestGatePath.self ) )
+
+        #expect( gatePath.next.hasResult )
+
+        TestGateMiddleware.allow = true
+        router.Close()
+        router.Route( gatePath.next )
+
+        let targetEntry = try #require( router.viewStack.last )
+        #expect( targetEntry.path.Typed( TestGateTargetPath.self ) != nil )
+
+        targetEntry.resultProvider.Send( "done" )
+
+        #expect( values == ["done"] )
     }
 
     private func MakeRouter(   ) -> RouterSimple

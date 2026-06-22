@@ -145,6 +145,7 @@ public final class RouterTabs: ObservableObject
 
     func ReleaseRouters()
     {
+        routers.values.forEach { $0.ReleaseAllEntries() }
         routers.removeAll()
     }
 

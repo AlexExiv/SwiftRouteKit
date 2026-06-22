@@ -13,10 +13,17 @@ public protocol Router: AnyObject
     func Route<Path: RoutePath>( _ path: Path ) -> ( any Router )?
 
     @discardableResult
+    func Route( _ params: RouteParams ) -> ( any Router )?
+
+    @discardableResult
     func Route( url: String ) -> ( any Router )?
 
     @discardableResult
     func RouteWithResult<Path: RoutePath, Result>( _ path: Path, result: @escaping ( Result ) -> Void ) -> ( any Router )?
+
+    func RouteForResult<Path: RoutePath, Result>( _ path: Path ) async -> Result?
+    func RouteForResults<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AsyncStream<Result>
+    func RouteResultPublisher<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AnyPublisher<Result, Never>
 
     @discardableResult
     func Replace<Path: RoutePath>( _ path: Path ) -> ( any Router )?
@@ -98,7 +105,25 @@ public final class RouterSimple: Router, ObservableObject
     @discardableResult
     public func Route<Path: RoutePath>( _ path: Path ) -> ( any Router )?
     {
-        Route( path: AnyRoutePath( path ), resultBinding: nil, replace: false )
+        Route( RouteParams( path: path ) )
+    }
+
+    @discardableResult
+    public func Route( _ params: RouteParams ) -> ( any Router )?
+    {
+        if params.isReplace
+        {
+            return Route( params: params, replace: true )
+        }
+
+        if let tabIndex = params.tabIndex
+        {
+            let tabs = tabsByViewKey[viewStack.last?.id ?? ""]
+            _ = tabs?.Route( tabIndex )
+            return tabs?.Router( for: tabIndex )
+        }
+
+        return Route( params: params, replace: false )
     }
 
     @discardableResult
@@ -107,11 +132,7 @@ public final class RouterSimple: Router, ObservableObject
         do
         {
             let resolved = try registry.Resolve( url: url )
-            return Route(
-                path: resolved.path,
-                controller: resolved.controller,
-                resultBinding: nil,
-                replace: false )
+            return Route( params: RouteParams( path: resolved.path ), controller: resolved.controller, replace: false )
         }
         catch
         {
@@ -123,16 +144,69 @@ public final class RouterSimple: Router, ObservableObject
     @discardableResult
     public func RouteWithResult<Path: RoutePath, Result>( _ path: Path, result: @escaping ( Result ) -> Void ) -> ( any Router )?
     {
-        Route(
-            path: AnyRoutePath( path ),
-            resultBinding: RouteResultBinding( result ),
-            replace: false )
+        Route( RouteParams( path: AnyRoutePath( path ), resultBinding: RouteResultBinding( result ) ) )
+    }
+
+    public func RouteForResult<Path: RoutePath, Result>( _ path: Path ) async -> Result?
+    {
+        await withCheckedContinuation { ( continuation: CheckedContinuation<Result?, Never> ) in
+            let binding = RouteResultBinding(
+                onDispatch: {
+                    guard let result = $0 as? Result else { return false }
+
+                    continuation.resume( returning: result )
+                    return true
+                },
+                onComplete: {
+                    continuation.resume( returning: nil )
+                } )
+
+            _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+        }
+    }
+
+    public func RouteForResults<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AsyncStream<Result>
+    {
+        let resultStream = AsyncStream<Result>.makeStream(of: Result.self)
+        let binding = RouteResultBinding(
+            onDispatch: {
+                guard let result = $0 as? Result else { return false }
+
+                resultStream.continuation.yield( result )
+                return false
+            },
+            onComplete: {
+                resultStream.continuation.finish()
+            } )
+
+        _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+
+        return resultStream.stream
+    }
+
+    public func RouteResultPublisher<Path: RoutePath, Result>( _ path: Path, as type: Result.Type ) -> AnyPublisher<Result, Never>
+    {
+        let subject = PassthroughSubject<Result, Never>()
+        let binding = RouteResultBinding(
+            onDispatch: {
+                guard let result = $0 as? Result else { return false }
+
+                subject.send( result )
+                return false
+            },
+            onComplete: {
+                subject.send( completion: .finished )
+            } )
+
+        _ = Route( RouteParams( path: AnyRoutePath( path ), resultBinding: binding ) )
+
+        return subject.eraseToAnyPublisher()
     }
 
     @discardableResult
     public func Replace<Path: RoutePath>( _ path: Path ) -> ( any Router )?
     {
-        Route( path: AnyRoutePath( path ), resultBinding: nil, replace: true )
+        Route( RouteParams( path: path, isReplace: true ) )
     }
 
     @discardableResult
@@ -155,8 +229,7 @@ public final class RouterSimple: Router, ObservableObject
             CloseNoStackPresentations()
             guard index < viewStack.count else { return ThisOrParent() }
 
-            let removed = viewStack.suffix( from: index + 1 )
-            viewStack.removeLast( removed.count )
+            Remove( entries: Array( viewStack.suffix( from: index + 1 ) ) )
             commandBuffer.Apply( .closeTo( key ) )
             return self
         }
@@ -172,8 +245,7 @@ public final class RouterSimple: Router, ObservableObject
 
         if let parent
         {
-            viewStack.removeAll()
-            commandBuffer.Apply( .closeAll )
+            ReleaseAllEntries()
             return parent.CloseTo( key: key )
         }
 
@@ -187,13 +259,12 @@ public final class RouterSimple: Router, ObservableObject
         {
             guard let first = viewStack.first else { return self }
 
-            viewStack = [first]
+            Remove( entries: Array( viewStack.dropFirst() ) )
             commandBuffer.Apply( .closeTo( first.id ) )
             return self
         }
 
-        viewStack.removeAll()
-        commandBuffer.Apply( .closeAll )
+        ReleaseAllEntries()
         return parent?.CloseToTop()
     }
 
@@ -212,16 +283,7 @@ public final class RouterSimple: Router, ObservableObject
     {
         let visible = Set( ids )
         let removed = viewStack.filter { visible.contains( $0.id ) == false }
-        guard removed.isEmpty == false else { return }
-
-        for entry in removed
-        {
-            TryCloseMiddlewares( entry: entry )
-            tabsByViewKey[entry.id]?.ReleaseRouters()
-            tabsByViewKey[entry.id] = nil
-        }
-
-        viewStack.removeAll { visible.contains( $0.id ) == false }
+        Remove( entries: removed )
     }
 
     public func CreateTabs( viewKey: String, descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class ) -> RouterTabs
@@ -243,6 +305,24 @@ public final class RouterSimple: Router, ObservableObject
         tabsByViewKey[viewKey] = tabs
         routerStack.PushReel( viewKey: viewKey )
         return tabs
+    }
+
+    func ReleaseAllEntries()
+    {
+        Remove( entries: viewStack )
+        commandBuffer.Apply( .closeAll )
+    }
+
+    func Remove( entries: [RouteEntry] )
+    {
+        if entries.isEmpty
+        {
+            return
+        }
+        
+        CleanupRemovedEntries( entries )
+        let ids = Set( entries.map(\.id) )
+        viewStack.removeAll { ids.contains( $0.id ) }
     }
 
     func TryRouteMiddlewares(
@@ -282,30 +362,27 @@ public final class RouterSimple: Router, ObservableObject
     }
 
     @discardableResult
-    func Route( path: AnyRoutePath, resultBinding: RouteResultBinding?, replace: Bool ) -> ( any Router )?
+    func Route( params: RouteParams, replace: Bool ) -> ( any Router )?
     {
-        guard let controller = registry.Controller( for: path ) else
+        guard let controller = registry.Controller( for: params.path ) else
         {
-            assertionFailure( RouterError.routeNotFound( path ).description )
+            assertionFailure( RouterError.routeNotFound( params.path ).description )
             return nil
         }
 
-        return Route(
-            path: path,
-            controller: controller,
-            resultBinding: resultBinding,
-            replace: replace )
+        return Route( params: params, controller: controller, replace: replace )
     }
 
     @discardableResult
-    private func Route( path: AnyRoutePath, controller: any AnyRouteController, resultBinding: RouteResultBinding?, replace: Bool ) -> ( any Router )?
+    private func Route( params: RouteParams, controller: any AnyRouteController, replace: Bool ) -> ( any Router )?
     {
         if routerTabs != nil, ShouldRouteInParent( controller: controller )
         {
-            return parent?.Route( path: path, controller: controller, resultBinding: resultBinding, replace: replace )
+            guard let parent else { return nil }
+
+            return parent.Route( params: params, controller: controller, replace: replace )
         }
 
-        let params = RouteParams( path: path, isReplace: replace )
         if TryRouteMiddlewares( next: params, targetController: controller )
         {
             return nil
@@ -313,22 +390,22 @@ public final class RouterSimple: Router, ObservableObject
 
         if replace
         {
-            return DoReplace( path: path, controller: controller, resultBinding: resultBinding )
+            return DoReplace( params: params, controller: controller )
         }
 
-        if case .push = controller.presentationStyle, let tabRouter = TryRouteToExistingTab( path: path )
+        if case .push = controller.presentationStyle, let tabRouter = TryRouteToExistingTab( path: params.path )
         {
             return tabRouter
         }
 
-        if controller.singleTop != .none, let existing = rootRouter.FindExisting( path: path, singleTop: controller.singleTop )
+        if controller.singleTop != .none, let existing = rootRouter.FindExisting( path: params.path, singleTop: controller.singleTop )
         {
             return existing.router.CloseTo( key: existing.entryID )
         }
 
         do
         {
-            let entry = try controller.MakeEntry( path: path, router: self, resultBinding: resultBinding )
+            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: params.resultBinding )
             Append( entry )
             return self
         }
@@ -369,15 +446,21 @@ public final class RouterSimple: Router, ObservableObject
         }
     }
 
-    private func DoReplace( path: AnyRoutePath, controller: any AnyRouteController, resultBinding: RouteResultBinding? ) -> ( any Router )?
+    private func DoReplace( params: RouteParams, controller: any AnyRouteController ) -> ( any Router )?
     {
-        let replacing = viewStack.popLast()?.id
-
         do
         {
-            let entry = try controller.MakeEntry( path: path, router: self, resultBinding: resultBinding )
+            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: params.resultBinding )
+
+            let replacing = viewStack.last
+            if let replacing
+            {
+                _ = viewStack.popLast()
+                CleanupRemovedEntry( replacing )
+            }
+
             viewStack.append( entry )
-            commandBuffer.Apply( replacing == nil ? .setRoot( entry ) : .replace( entry, replacing: replacing ) )
+            commandBuffer.Apply( replacing == nil ? .setRoot( entry ) : .replace( entry, replacing: replacing?.id ) )
             return self
         }
         catch
@@ -400,11 +483,10 @@ public final class RouterSimple: Router, ObservableObject
 
         guard let entry = viewStack.popLast() else { return ThisOrParent() }
 
-        TryCloseMiddlewares( entry: entry )
+        CleanupRemovedEntry( entry )
         commandBuffer.Apply( .close( entry ) )
 
-        if closeChain,
-           let chainEntry = viewStack.last( where: { $0.controller.IsPartOfChain( path: entry.path ) } )
+        if closeChain, let chainEntry = viewStack.last( where: { $0.controller.IsPartOfChain( path: entry.path ) } )
         {
             return CloseTo( key: chainEntry.id )
         }
@@ -437,12 +519,25 @@ public final class RouterSimple: Router, ObservableObject
         }
     }
 
+    private func CleanupRemovedEntries( _ entries: [RouteEntry] )
+    {
+        entries.reversed().forEach { CleanupRemovedEntry( $0 ) }
+    }
+
+    private func CleanupRemovedEntry( _ entry: RouteEntry )
+    {
+        TryCloseMiddlewares( entry: entry )
+        tabsByViewKey[entry.id]?.ReleaseRouters()
+        tabsByViewKey[entry.id] = nil
+    }
+
     private func SyncExecutor()
     {
         let removed = commandBuffer.Sync( entries: viewStack.map( \.id ) )
         guard removed.isEmpty == false else { return }
 
-        viewStack.removeAll { removed.contains( $0.id ) }
+        let removedEntries = viewStack.filter { removed.contains( $0.id ) }
+        Remove( entries: removedEntries )
     }
 
     private func ShouldRouteInParent( controller: any AnyRouteController ) -> Bool

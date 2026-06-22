@@ -91,7 +91,7 @@ open class RouteController<Path: RoutePath, V: RouterView>: AnyRouteController
             throw RouterError.pathTypeMismatch( expected: Path.self, actual: Swift.type( of: path.base ) )
         }
 
-        let entry = RouteEntry( path: AnyRoutePath( path ), controller: self, presentationStyle: presentationStyle, resultBinding: resultBinding )
+        let entry = RouteEntry( path: AnyRoutePath( path ), controller: self, presentationStyle: presentationStyle, router: router, resultBinding: resultBinding )
         Prepare( entry: entry, path: path, router: router )
         
         return entry

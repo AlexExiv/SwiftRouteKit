@@ -9,17 +9,19 @@ public final class RouteEntry: Identifiable, Hashable
     public let controller: any AnyRouteController
     public let presentationStyle: RoutePresentationStyle
     public let resultProvider: ResultProvider
+    public private( set ) weak var router: ( any Router )?
 
     public var viewModel: RouterViewModel?
     public var lockBack = false
 
-    init( id: String = UUID().uuidString, path: AnyRoutePath, controller: any AnyRouteController, presentationStyle: RoutePresentationStyle, resultBinding: RouteResultBinding? )
+    init( id: String = UUID().uuidString, path: AnyRoutePath, controller: any AnyRouteController, presentationStyle: RoutePresentationStyle, router: ( any Router )?, resultBinding: RouteResultBinding? )
     {
         self.id = id
         self.path = path
         self.controller = controller
         self.presentationStyle = presentationStyle
-        self.resultProvider = ResultProvider( key: id ) { resultBinding?.Dispatch( $0 ) }
+        self.router = router
+        self.resultProvider = ResultProvider( key: id, resultBinding: resultBinding )
     }
 
     public nonisolated static func == ( lhs: RouteEntry, rhs: RouteEntry ) -> Bool

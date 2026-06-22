@@ -1,12 +1,12 @@
 import Foundation
 
-public struct RouteURLMatch: Sendable
+public struct RouteURLMatch
 {
     public let parameters: [String: String]
     public let query: [String: String]
 }
 
-public struct RouteURLPattern: Sendable
+public struct RouteURLPattern
 {
     public let rawValue: String
     public let parameterNames: [String]
@@ -80,7 +80,7 @@ public struct RouteURLPattern: Sendable
         Match( url ) != nil
     }
 
-    private enum Segment: Sendable
+    private enum Segment
     {
         case literal( String )
         case parameter( String )

@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-public protocol RoutePath: Hashable, Codable, Sendable
+public protocol RoutePath: Hashable
 {
 }
 
@@ -10,7 +10,7 @@ public protocol EmptyParamsPath: RoutePath
     init()
 }
 
-public struct AnyRoutePath: Hashable, Sendable
+public struct AnyRoutePath: Hashable
 {
     public let base: any RoutePath
     public let typeName: String
@@ -42,14 +42,14 @@ public struct AnyRoutePath: Hashable, Sendable
     }
 }
 
-public enum RouteSingleTop: String, Sendable
+public enum RouteSingleTop: String
 {
     case none
     case `class`
     case equal
 }
 
-public enum RouteTabUnique: String, Sendable
+public enum RouteTabUnique: String
 {
     case none
     case `class`
@@ -155,16 +155,34 @@ public extension AnimationController
     }
 }
 
-public struct RouteParams: Sendable
+public struct RouteParams: Hashable
 {
+    public var hasResult: Bool
+    {
+        resultBinding != nil
+    }
+
     public let path: AnyRoutePath
     public let isReplace: Bool
     public let tabIndex: Int?
 
+    let resultBinding: RouteResultBinding?
+
     public init( path: AnyRoutePath, isReplace: Bool = false, tabIndex: Int? = nil )
+    {
+        self.init( path: path, isReplace: isReplace, tabIndex: tabIndex, resultBinding: nil )
+    }
+
+    public init<Path: RoutePath>( path: Path, isReplace: Bool = false, tabIndex: Int? = nil )
+    {
+        self.init( path: AnyRoutePath( path ), isReplace: isReplace, tabIndex: tabIndex, resultBinding: nil )
+    }
+
+    init( path: AnyRoutePath, isReplace: Bool = false, tabIndex: Int? = nil, resultBinding: RouteResultBinding? )
     {
         self.path = path
         self.isReplace = isReplace
         self.tabIndex = tabIndex
+        self.resultBinding = resultBinding
     }
 }

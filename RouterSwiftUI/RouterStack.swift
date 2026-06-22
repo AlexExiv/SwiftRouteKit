@@ -1,6 +1,6 @@
 import Foundation
 
-public struct RouterStackPathComponent: Identifiable, Hashable, Sendable
+public struct RouterStackPathComponent: Identifiable, Hashable
 {
     public let id: String
     public let routerKey: String
