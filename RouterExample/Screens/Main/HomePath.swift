@@ -7,7 +7,7 @@ struct HomePath: RoutePath, EmptyParamsPath
     }
 }
 
-@Route( uri: "/home", singleTop: .equal )
+@Route( uri: "/home", singleTop: .class )
 final class HomeRouteController: RouteController<HomePath, HomeView>
 {
     override func OnCreateView( path: HomePath ) -> HomeView

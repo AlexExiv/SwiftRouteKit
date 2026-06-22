@@ -11,7 +11,7 @@ struct FlowerDetailPath: RoutePath
     }
 }
 
-@Route( uri: "/flowers/:id", singleTop: .equal )
+@Route( uri: "/flowers/:id" )
 final class FlowerDetailRouteController: RouteController<FlowerDetailPath, FlowerDetailView<FlowerDetailViewModelImpl>>
 {
     override func Convert( path: [String: String], query: [String: String] ) -> FlowerDetailPath?

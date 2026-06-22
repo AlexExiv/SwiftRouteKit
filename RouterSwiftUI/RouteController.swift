@@ -9,6 +9,7 @@ public protocol AnyRouteController: AnyObject
     var uri: String? { get }
     var singleTop: RouteSingleTop { get }
     var presentationStyle: RoutePresentationStyle { get }
+    var containerStyle: RouteContainerStyle { get }
     var localMiddlewares: [any MiddlewareController] { get }
 
     func Configure( uri: String?, singleTop: RouteSingleTop, animationFactory: (@MainActor () -> (any AnimationController )?)?, middlewareFactories: [@MainActor () -> any MiddlewareController] )
@@ -61,6 +62,16 @@ open class RouteController<Path: RoutePath, V: RouterView>: AnyRouteController
         return .push
     }
 
+    public var containerStyle: RouteContainerStyle
+    {
+        if V.self is any RouterTabsView.Type
+        {
+            return .tabs
+        }
+
+        return .screen
+    }
+
     public final func Configure( uri: String?, singleTop: RouteSingleTop, animationFactory: ( @MainActor () -> ( any AnimationController )? )?, middlewareFactories: [@MainActor () -> any MiddlewareController] )
     {
         self.uri = uri?.isEmpty == true ? nil : uri
@@ -91,7 +102,7 @@ open class RouteController<Path: RoutePath, V: RouterView>: AnyRouteController
             throw RouterError.pathTypeMismatch( expected: Path.self, actual: Swift.type( of: path.base ) )
         }
 
-        let entry = RouteEntry( path: AnyRoutePath( path ), controller: self, presentationStyle: presentationStyle, router: router, resultBinding: resultBinding )
+        let entry = RouteEntry( path: AnyRoutePath( path ), controller: self, presentationStyle: presentationStyle, containerStyle: containerStyle, router: router, resultBinding: resultBinding )
         Prepare( entry: entry, path: path, router: router )
         
         return entry

@@ -8,18 +8,20 @@ public final class RouteEntry: Identifiable, Hashable
     public let path: AnyRoutePath
     public let controller: any AnyRouteController
     public let presentationStyle: RoutePresentationStyle
+    public let containerStyle: RouteContainerStyle
     public let resultProvider: ResultProvider
     public private( set ) weak var router: ( any Router )?
 
     public var viewModel: RouterViewModel?
     public var lockBack = false
 
-    init( id: String = UUID().uuidString, path: AnyRoutePath, controller: any AnyRouteController, presentationStyle: RoutePresentationStyle, router: ( any Router )?, resultBinding: RouteResultBinding? )
+    init( id: String = UUID().uuidString, path: AnyRoutePath, controller: any AnyRouteController, presentationStyle: RoutePresentationStyle, containerStyle: RouteContainerStyle, router: ( any Router )?, resultBinding: RouteResultBinding? )
     {
         self.id = id
         self.path = path
         self.controller = controller
         self.presentationStyle = presentationStyle
+        self.containerStyle = containerStyle
         self.router = router
         self.resultProvider = ResultProvider( key: id, resultBinding: resultBinding )
     }

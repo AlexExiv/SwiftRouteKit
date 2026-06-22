@@ -139,6 +139,12 @@ public enum RoutePresentationStyle
     }
 }
 
+public enum RouteContainerStyle
+{
+    case screen
+    case tabs
+}
+
 @MainActor
 public protocol AnimationController: AnyObject
 {

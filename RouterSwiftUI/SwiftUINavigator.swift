@@ -88,6 +88,11 @@ public final class SwiftUINavigator: ObservableObject
         items.map( \.id )
     }
 
+    var isNoNavigationStack: Bool
+    {
+        root?.containerStyle == .tabs && stack.isEmpty
+    }
+
     public var stackBinding: Binding<[RouteEntry]>
     {
         Binding(

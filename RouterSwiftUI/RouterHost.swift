@@ -16,33 +16,46 @@ public struct RouterHost<RootPath: RoutePath>: View
 
     public var body: some View
     {
-        NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
-            RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
-                .navigationDestination( for: RouteEntry.self ) {
-                    RouterEntryView( entry: $0 )
-                }
-        }
-        .sheet( item: navigator.sheetBinding ) {
-            RouterEntryView( entry: $0 )
-        }
-        .sheet( item: navigator.bottomSheetBinding ) {
-            RouterEntryView( entry: $0 )
-                .presentationDetents( Detents( for: $0 ) )
-        }
-        .RouterFullScreenCover( item: navigator.fullScreenBinding )
-        .environment( \.router, router )
-        .onAppear {
-            router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
-            if let rootPath, router.isEmpty
-            {
-                router.Route( rootPath )
+        RootContent()
+            .sheet( item: navigator.sheetBinding ) {
+                RouterEntryView( entry: $0 )
             }
+            .sheet( item: navigator.bottomSheetBinding ) {
+                RouterEntryView( entry: $0 )
+                    .presentationDetents( Detents( for: $0 ) )
+            }
+            .RouterFullScreenCover( item: navigator.fullScreenBinding )
+            .environment( \.router, router )
+            .onAppear {
+                router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+                if let rootPath, router.isEmpty
+                {
+                    router.Route( rootPath )
+                }
+            }
+            .onDisappear {
+                router.UnbindExecutor()
+            }
+            .onChange( of: navigator.visibleEntryIDs ) {
+                router.SyncVisibleEntries( $0 )
+            }
+    }
+
+    @ViewBuilder
+    private func RootContent() -> some View
+    {
+        if navigator.isNoNavigationStack
+        {
+            RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
         }
-        .onDisappear {
-            router.UnbindExecutor()
-        }
-        .onChange( of: navigator.visibleEntryIDs ) {
-            router.SyncVisibleEntries( $0 )
+        else
+        {
+            NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
+                RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
+                    .navigationDestination( for: RouteEntry.self ) {
+                        RouterEntryView( entry: $0 )
+                    }
+            }
         }
     }
 
@@ -144,42 +157,59 @@ private struct _AnyRouterHost: View
 
     var body: some View
     {
-        NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
-            Group {
-                if let root = navigator.root
-                {
-                    RouterEntryView( entry: root )
-                }
-                else
-                {
-                    Color.clear
-                }
-            }
-            .navigationDestination( for: RouteEntry.self ) {
+        RootContent()
+            .sheet( item: navigator.sheetBinding ) {
                 RouterEntryView( entry: $0 )
             }
+            .sheet( item: navigator.bottomSheetBinding ) {
+                RouterEntryView( entry: $0 )
+                    .presentationDetents( Detents( for: $0 ) )
+            }
+            .RouterFullScreenCover( item: navigator.fullScreenBinding )
+            .environment( \.router, router )
+            .onAppear {
+                router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
+                if let rootPath, router.isEmpty
+                {
+                    router.Route( RouteParams( path: rootPath ) )
+                }
+            }
+            .onDisappear {
+                router.UnbindExecutor()
+            }
+            .onChange( of: navigator.visibleEntryIDs ) {
+                router.SyncVisibleEntries( $0 )
+            }
+    }
+
+    @ViewBuilder
+    private func RootContent() -> some View
+    {
+        if navigator.isNoNavigationStack
+        {
+            RootView()
         }
-        .sheet( item: navigator.sheetBinding ) {
-            RouterEntryView( entry: $0 )
-        }
-        .sheet( item: navigator.bottomSheetBinding ) {
-            RouterEntryView( entry: $0 )
-                .presentationDetents( Detents( for: $0 ) )
-        }
-        .RouterFullScreenCover( item: navigator.fullScreenBinding )
-        .environment( \.router, router )
-        .onAppear {
-            router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
-            if let rootPath, router.isEmpty
-            {
-                router.Route( RouteParams( path: rootPath ) )
+        else
+        {
+            NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
+                RootView()
+                    .navigationDestination( for: RouteEntry.self ) {
+                        RouterEntryView( entry: $0 )
+                    }
             }
         }
-        .onDisappear {
-            router.UnbindExecutor()
+    }
+
+    @ViewBuilder
+    private func RootView() -> some View
+    {
+        if let root = navigator.root
+        {
+            RouterEntryView( entry: root )
         }
-        .onChange( of: navigator.visibleEntryIDs ) {
-            router.SyncVisibleEntries( $0 )
+        else
+        {
+            Color.clear
         }
     }
 

@@ -7,7 +7,7 @@ struct CartPath: RoutePath, EmptyParamsPath
     }
 }
 
-@Route( uri: "/cart", singleTop: .equal )
+@Route( uri: "/cart", singleTop: .class )
 final class CartRouteController: RouteController<CartPath, CartView<CartViewModelImpl>>
 {
     override func OnCreateView( path: CartPath ) -> CartView<CartViewModelImpl>

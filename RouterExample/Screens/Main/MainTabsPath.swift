@@ -7,7 +7,7 @@ struct MainTabsPath: RoutePath, EmptyParamsPath
     }
 }
 
-@Route( uri: "/", singleTop: .equal )
+@Route( uri: "/" )
 final class MainTabsRouteController: RouteController<MainTabsPath, MainTabsView>
 {
     override func OnCreateView( path: MainTabsPath ) -> MainTabsView

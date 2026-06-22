@@ -7,7 +7,7 @@ struct FlowerListPath: RoutePath, EmptyParamsPath
     }
 }
 
-@Route( uri: "/flowers", singleTop: .equal )
+@Route( uri: "/flowers" )
 final class FlowerListRouteController: RouteController<FlowerListPath, FlowerListView<FlowerListViewModelImpl>>
 {
     override func OnCreateView( path: FlowerListPath ) -> FlowerListView<FlowerListViewModelImpl>

@@ -7,7 +7,7 @@ struct AddFlowerPath: RoutePath, EmptyParamsPath
     }
 }
 
-@Route( uri: "/flowers/new", singleTop: .equal )
+@Route( uri: "/flowers/new" )
 final class AddFlowerRouteController: RouteController<AddFlowerPath, AddFlowerView<AddFlowerViewModelImpl>>
 {
     override func OnCreateView( path: AddFlowerPath ) -> AddFlowerView<AddFlowerViewModelImpl>
