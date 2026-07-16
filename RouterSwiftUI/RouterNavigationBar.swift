@@ -302,32 +302,51 @@ struct RouterNavigationBarEntryHost<Content: View>: View
         {
         case .custom( let navigationBar, let contentSpacing ):
             #if os(iOS)
-            content
+            ExpandedContent()
                 .toolbar( .hidden, for: .navigationBar )
-                .safeAreaInset( edge: .top, spacing: contentSpacing ) {
+                .safeAreaInset(
+                    edge: .top,
+                    spacing: contentSpacing
+                )
+                {
                     navigationBar
                 }
             #else
-            content
-                .safeAreaInset( edge: .top, spacing: contentSpacing ) {
+            ExpandedContent()
+                .safeAreaInset(
+                    edge: .top,
+                    spacing: contentSpacing
+                )
+                {
                     navigationBar
                 }
             #endif
+
         case .native:
             #if os(iOS)
-            content
+            ExpandedContent()
                 .toolbar( .visible, for: .navigationBar )
             #else
-            content
+            ExpandedContent()
             #endif
+
         case .hidden:
             #if os(iOS)
-            content
+            ExpandedContent()
                 .toolbar( .hidden, for: .navigationBar )
             #else
-            content
+            ExpandedContent()
             #endif
         }
+    }
+    
+    private func ExpandedContent() -> some View
+    {
+        content
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity
+            )
     }
 
     private func Resolution() -> RouterNavigationBarResolution
