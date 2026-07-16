@@ -33,7 +33,8 @@ struct CartView<ViewModel: CartViewModel>: RouterView
                 }
             }
         }
-        .navigationTitle( "Корзина" )
+        .navigationTitle( "Cart" )
+        .topAppBarTitle( "Cart" )
     }
 
     private func ItemRow( _ item: CartItem ) -> some View

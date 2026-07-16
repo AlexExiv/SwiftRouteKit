@@ -114,6 +114,11 @@ struct TestGateTargetPath: RoutePath, EmptyParamsPath
     }
 }
 
+private struct TestNavigationBarConfiguration
+{
+    var contentSpacing: CGFloat
+}
+
 struct TestTextView: RouterView
 {
     let text: String
@@ -734,6 +739,178 @@ struct RouterSwiftUITests
         targetEntry.resultProvider.Send( "done" )
 
         #expect( values == ["done"] )
+    }
+
+    @Test
+    func NavigationBarHiddenIsEntryBound() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+        router.Route( TestSettingsPath( section: "next" ) )
+
+        let firstEntry = try #require( router.viewStack.first )
+        let secondEntry = try #require( router.viewStack.last )
+        let store = RouterNavigationBarStore()
+        let provider = AnyRouterNavigationBarProvider( configuration: "Default" ) {
+            configuration, _ in
+
+            Text( configuration )
+        }
+        let token = UUID()
+
+        store.SetHidden( entryID: firstEntry.id, token: token )
+
+        #expect( IsHidden( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) )
+        #expect( IsCustom( store.Resolve( provider: provider, entry: secondEntry, context: NavigationBarContext( secondEntry ) ) ) )
+
+        store.RemoveHidden( entryID: firstEntry.id, token: token )
+
+        #expect( IsCustom( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) )
+    }
+
+    @Test
+    func NavigationBarResolutionPrecedence() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+
+        let entry = try #require( router.viewStack.last )
+        let store = RouterNavigationBarStore()
+        let provider = AnyRouterNavigationBarProvider( configuration: "Default" ) {
+            configuration, _ in
+
+            Text( configuration )
+        }
+        let nativeToken = UUID()
+        let hiddenToken = UUID()
+        let replacementToken = UUID()
+        let context = NavigationBarContext( entry )
+
+        #expect( IsNative( store.Resolve( provider: nil, entry: entry, context: context ) ) )
+        #expect( IsCustom( store.Resolve( provider: provider, entry: entry, context: context ) ) )
+
+        store.SetNative( entryID: entry.id, token: nativeToken )
+        #expect( IsNative( store.Resolve( provider: provider, entry: entry, context: context ) ) )
+
+        store.SetHidden( entryID: entry.id, token: hiddenToken )
+        #expect( IsHidden( store.Resolve( provider: provider, entry: entry, context: context ) ) )
+
+        store.SetReplacement( entryID: entry.id, token: replacementToken ) {
+            AnyView( Text( "Replacement" ) )
+        }
+        #expect( IsCustom( store.Resolve( provider: provider, entry: entry, context: context ) ) )
+
+        store.RemoveReplacement( entryID: entry.id, token: replacementToken )
+        store.RemoveHidden( entryID: entry.id, token: hiddenToken )
+        store.RemoveNative( entryID: entry.id, token: nativeToken )
+
+        #expect( IsCustom( store.Resolve( provider: provider, entry: entry, context: context ) ) )
+    }
+
+    @Test
+    func NavigationBarContentSpacingUsesEntryUpdates() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+        router.Route( TestSettingsPath( section: "next" ) )
+
+        let firstEntry = try #require( router.viewStack.first )
+        let secondEntry = try #require( router.viewStack.last )
+        let store = RouterNavigationBarStore()
+        let provider = AnyRouterNavigationBarProvider(
+            configuration: TestNavigationBarConfiguration( contentSpacing: 8 ),
+            contentSpacing: { $0.contentSpacing } ) {
+                _, _ in
+
+                EmptyView()
+            }
+        let token = UUID()
+
+        store.SetUpdate( entryID: firstEntry.id, token: token, update: AnyRouterNavigationBarUpdate {
+            (configuration: inout TestNavigationBarConfiguration) in
+
+            configuration.contentSpacing = 16
+        } )
+
+        #expect( ContentSpacing( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) == 16 )
+        #expect( ContentSpacing( store.Resolve( provider: provider, entry: secondEntry, context: NavigationBarContext( secondEntry ) ) ) == 8 )
+
+        let replacementToken = UUID()
+        store.SetReplacement( entryID: firstEntry.id, token: replacementToken ) {
+            AnyView( EmptyView() )
+        }
+
+        #expect( ContentSpacing( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) == 16 )
+
+        store.RemoveReplacement( entryID: firstEntry.id, token: replacementToken )
+
+        store.RemoveUpdate( entryID: firstEntry.id, token: token )
+
+        #expect( ContentSpacing( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) == 8 )
+    }
+
+    @Test
+    func NavigationBarContentSpacingDefaultsToZero() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+
+        let entry = try #require( router.viewStack.last )
+        let provider = AnyRouterNavigationBarProvider( configuration: "Default" ) {
+            configuration, _ in
+
+            Text( configuration )
+        }
+
+        #expect( ContentSpacing( RouterNavigationBarStore().Resolve(
+            provider: provider,
+            entry: entry,
+            context: NavigationBarContext( entry ) ) ) == 0 )
+    }
+
+    private func NavigationBarContext( _ entry: RouteEntry ) -> RouterNavigationBarContext
+    {
+        RouterNavigationBarContext( entry: entry, canGoBack: false, back: {} )
+    }
+
+    private func IsCustom( _ resolution: RouterNavigationBarResolution ) -> Bool
+    {
+        if case .custom = resolution
+        {
+            return true
+        }
+
+        return false
+    }
+
+    private func IsNative( _ resolution: RouterNavigationBarResolution ) -> Bool
+    {
+        if case .native = resolution
+        {
+            return true
+        }
+
+        return false
+    }
+
+    private func IsHidden( _ resolution: RouterNavigationBarResolution ) -> Bool
+    {
+        if case .hidden = resolution
+        {
+            return true
+        }
+
+        return false
+    }
+
+    private func ContentSpacing( _ resolution: RouterNavigationBarResolution ) -> CGFloat?
+    {
+        if case .custom( _, let contentSpacing ) = resolution
+        {
+            return contentSpacing
+        }
+
+        return nil
     }
 
     private func MakeRouter(   ) -> RouterSimple

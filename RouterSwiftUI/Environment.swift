@@ -17,6 +17,22 @@ private struct RouteEntryEnvironmentKey: EnvironmentKey
     }
 }
 
+private struct RouterNavigationBarProviderEnvironmentKey: EnvironmentKey
+{
+    static var defaultValue: AnyRouterNavigationBarProvider?
+    {
+        nil
+    }
+}
+
+private struct RouterNavigationBarStoreEnvironmentKey: EnvironmentKey
+{
+    static var defaultValue: RouterNavigationBarStore?
+    {
+        nil
+    }
+}
+
 public extension EnvironmentValues
 {
     var router: any Router
@@ -29,6 +45,18 @@ public extension EnvironmentValues
     {
         get { self[RouteEntryEnvironmentKey.self] }
         set { self[RouteEntryEnvironmentKey.self] = newValue }
+    }
+
+    internal var routerNavigationBarProvider: AnyRouterNavigationBarProvider?
+    {
+        get { self[RouterNavigationBarProviderEnvironmentKey.self] }
+        set { self[RouterNavigationBarProviderEnvironmentKey.self] = newValue }
+    }
+
+    internal var routerNavigationBarStore: RouterNavigationBarStore?
+    {
+        get { self[RouterNavigationBarStoreEnvironmentKey.self] }
+        set { self[RouterNavigationBarStoreEnvironmentKey.self] = newValue }
     }
 }
 

@@ -5,6 +5,12 @@ public struct RouterHost<RootPath: RoutePath>: View
     @StateObject
     private var navigator = SwiftUINavigator()
 
+    @StateObject
+    private var navigationBarStore = RouterNavigationBarStore()
+
+    @Environment( \.routerNavigationBarProvider )
+    private var navigationBarProvider
+
     private let router: RouterSimple
     private let rootPath: RootPath?
 
@@ -26,6 +32,7 @@ public struct RouterHost<RootPath: RoutePath>: View
             }
             .RouterFullScreenCover( item: navigator.fullScreenBinding )
             .environment( \.router, router )
+            .environment( \.routerNavigationBarStore, navigationBarStore )
             .onAppear {
                 router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
                 if let rootPath, router.isEmpty
@@ -51,12 +58,37 @@ public struct RouterHost<RootPath: RoutePath>: View
         else
         {
             NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
-                RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
+                NavigationRootContent()
                     .navigationDestination( for: RouteEntry.self ) {
-                        RouterEntryView( entry: $0 )
+                        NavigationEntryContent( $0 )
                     }
             }
         }
+    }
+
+    @ViewBuilder
+    private func NavigationRootContent() -> some View
+    {
+        if let root = navigator.root
+        {
+            NavigationEntryContent( root )
+        }
+        else
+        {
+            Color.clear
+        }
+    }
+
+    private func NavigationEntryContent( _ entry: RouteEntry ) -> some View
+    {
+        RouterNavigationBarEntryHost(
+            store: navigationBarStore,
+            provider: navigationBarProvider,
+            entry: entry,
+            canGoBack: navigator.stack.isEmpty == false,
+            back: { _ = router.Back() } ) {
+                RouterEntryView( entry: entry )
+            }
     }
 
     private func Detents( for entry: RouteEntry ) -> Set<PresentationDetent>
@@ -65,6 +97,7 @@ public struct RouterHost<RootPath: RoutePath>: View
 
         return detents
     }
+
 }
 
 private struct RouterRootView<RootPath: RoutePath>: View
@@ -152,6 +185,12 @@ private struct _AnyRouterHost: View
     @StateObject
     private var navigator = SwiftUINavigator()
 
+    @StateObject
+    private var navigationBarStore = RouterNavigationBarStore()
+
+    @Environment( \.routerNavigationBarProvider )
+    private var navigationBarProvider
+
     let router: RouterSimple
     let rootPath: AnyRoutePath?
 
@@ -167,6 +206,7 @@ private struct _AnyRouterHost: View
             }
             .RouterFullScreenCover( item: navigator.fullScreenBinding )
             .environment( \.router, router )
+            .environment( \.routerNavigationBarStore, navigationBarStore )
             .onAppear {
                 router.BindExecutor( SwiftUICommandExecutor( navigator: navigator ) )
                 if let rootPath, router.isEmpty
@@ -192,12 +232,37 @@ private struct _AnyRouterHost: View
         else
         {
             NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
-                RootView()
+                NavigationRootView()
                     .navigationDestination( for: RouteEntry.self ) {
-                        RouterEntryView( entry: $0 )
+                        NavigationEntryContent( $0 )
                     }
             }
         }
+    }
+
+    @ViewBuilder
+    private func NavigationRootView() -> some View
+    {
+        if let root = navigator.root
+        {
+            NavigationEntryContent( root )
+        }
+        else
+        {
+            Color.clear
+        }
+    }
+
+    private func NavigationEntryContent( _ entry: RouteEntry ) -> some View
+    {
+        RouterNavigationBarEntryHost(
+            store: navigationBarStore,
+            provider: navigationBarProvider,
+            entry: entry,
+            canGoBack: navigator.stack.isEmpty == false,
+            back: { _ = router.Back() } ) {
+                RouterEntryView( entry: entry )
+            }
     }
 
     @ViewBuilder
@@ -219,6 +284,7 @@ private struct _AnyRouterHost: View
 
         return detents
     }
+
 }
 
 private extension View

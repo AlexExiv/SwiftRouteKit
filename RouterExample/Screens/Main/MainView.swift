@@ -72,6 +72,7 @@ struct HomeView: RouterView
         }
         .buttonStyle( .plain )
         .navigationTitle( "SibFlowers" )
+        .topAppBarTitle( "SibFlowers" )
     }
 }
 
