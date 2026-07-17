@@ -11,7 +11,7 @@ import RouterSwiftUI
 struct NavigationBarConfig
 {
     var title = ""
-    var contentSpacing: CGFloat = 16
+    var contentPlacement = RouterNavigationBarContentPlacement.inset( spacing: 16 )
     var style: TopAppBarStyle = .standard
     var actions: [TopAppBarItem] = []
 }
@@ -44,7 +44,7 @@ struct RouterExampleApp: App
             RouterHost( router: router, rootPath: MainTabsPath() )
                 .routerNavigationBar(
                     default: NavigationBarConfig(),
-                    contentSpacing: \.contentSpacing
+                    contentPlacement: \.contentPlacement
                 )
                 {
                     cfg, ctx in

@@ -23,7 +23,8 @@ struct FlowerListView<ViewModel: FlowerListViewModel>: RouterView
         List( viewModel.flowers ) {
             FlowerButton( $0 )
         }
-        .navigationTitle( "Цветы" )
+        .topAppBarTitle( "Цветы" )
+        .topAppBarTransparent()
         .onAppear
         {
             viewModel.Refresh()

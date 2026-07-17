@@ -1,6 +1,12 @@
 import Combine
 import SwiftUI
 
+public enum RouterNavigationBarContentPlacement: Equatable
+{
+    case inset( spacing: CGFloat )
+    case overlay
+}
+
 @MainActor
 public struct RouterNavigationBarContext
 {
@@ -22,14 +28,22 @@ struct AnyRouterNavigationBarProvider
     let configurationType: ObjectIdentifier
     let defaultConfiguration: Any
     let makeView: ( Any, RouterNavigationBarContext ) -> AnyView
-    let contentSpacing: ( Any ) -> CGFloat
+    let contentPlacement: ( Any ) -> RouterNavigationBarContentPlacement
 
     init<Configuration, Bar: View>( configuration: Configuration, @ViewBuilder content: @escaping ( Configuration, RouterNavigationBarContext ) -> Bar )
     {
-        self.init( configuration: configuration, contentSpacing: { _ in 0 }, content: content )
+        self.init( configuration: configuration, contentPlacement: { _ in .inset( spacing: 0 ) }, content: content )
     }
 
     init<Configuration, Bar: View>( configuration: Configuration, contentSpacing: @escaping ( Configuration ) -> CGFloat, @ViewBuilder content: @escaping ( Configuration, RouterNavigationBarContext ) -> Bar )
+    {
+        self.init(
+            configuration: configuration,
+            contentPlacement: { .inset( spacing: contentSpacing( $0 ) ) },
+            content: content )
+    }
+
+    init<Configuration, Bar: View>( configuration: Configuration, contentPlacement: @escaping ( Configuration ) -> RouterNavigationBarContentPlacement, @ViewBuilder content: @escaping ( Configuration, RouterNavigationBarContext ) -> Bar )
     {
         configurationType = ObjectIdentifier( Configuration.self )
         defaultConfiguration = configuration
@@ -42,14 +56,14 @@ struct AnyRouterNavigationBarProvider
 
             return AnyView( content( configuration, context ) )
         }
-        self.contentSpacing = { configuration in
+        self.contentPlacement = { configuration in
             guard let configuration = configuration as? Configuration else
             {
                 assertionFailure( "Router navigation bar configuration type mismatch." )
-                return 0
+                return .inset( spacing: 0 )
             }
 
-            return contentSpacing( configuration )
+            return contentPlacement( configuration )
         }
     }
 }
@@ -79,7 +93,7 @@ struct AnyRouterNavigationBarUpdate
 @MainActor
 enum RouterNavigationBarResolution
 {
-    case custom( AnyView, contentSpacing: CGFloat )
+    case custom( AnyView, contentPlacement: RouterNavigationBarContentPlacement )
     case native
     case hidden
 }
@@ -203,11 +217,11 @@ final class RouterNavigationBarStore: ObservableObject
         {
             guard let provider else
             {
-                return .custom( replacement.makeView(), contentSpacing: 0 )
+                return .custom( replacement.makeView(), contentPlacement: .inset( spacing: 0 ) )
             }
 
             let configuration = Configuration( provider: provider, overrides: overrides )
-            return .custom( replacement.makeView(), contentSpacing: provider.contentSpacing( configuration ) )
+            return .custom( replacement.makeView(), contentPlacement: provider.contentPlacement( configuration ) )
         }
 
         if overrides?.hiddenTokens.isEmpty == false
@@ -224,7 +238,7 @@ final class RouterNavigationBarStore: ObservableObject
         let configuration = Configuration( provider: provider, overrides: overrides )
         return .custom(
             provider.makeView( configuration, context ),
-            contentSpacing: provider.contentSpacing( configuration ) )
+            contentPlacement: provider.contentPlacement( configuration ) )
     }
 
     private func Configuration( provider: AnyRouterNavigationBarProvider, overrides: EntryOverrides? ) -> Any
@@ -300,27 +314,10 @@ struct RouterNavigationBarEntryHost<Content: View>: View
 
         switch Resolution()
         {
-        case .custom( let navigationBar, let contentSpacing ):
-            #if os(iOS)
-            ExpandedContent()
-                .toolbar( .hidden, for: .navigationBar )
-                .safeAreaInset(
-                    edge: .top,
-                    spacing: contentSpacing
-                )
-                {
-                    navigationBar
-                }
-            #else
-            ExpandedContent()
-                .safeAreaInset(
-                    edge: .top,
-                    spacing: contentSpacing
-                )
-                {
-                    navigationBar
-                }
-            #endif
+        case .custom( let navigationBar, let contentPlacement ):
+            CustomContent(
+                navigationBar: navigationBar,
+                contentPlacement: contentPlacement )
 
         case .native:
             #if os(iOS)
@@ -336,6 +333,51 @@ struct RouterNavigationBarEntryHost<Content: View>: View
                 .toolbar( .hidden, for: .navigationBar )
             #else
             ExpandedContent()
+            #endif
+        }
+    }
+
+    @ViewBuilder
+    private func CustomContent( navigationBar: AnyView, contentPlacement: RouterNavigationBarContentPlacement ) -> some View
+    {
+        switch contentPlacement
+        {
+        case .inset( let spacing ):
+            #if os(iOS)
+            ExpandedContent()
+                .toolbar( .hidden, for: .navigationBar )
+                .safeAreaInset(
+                    edge: .top,
+                    spacing: spacing
+                )
+                {
+                    navigationBar
+                }
+            #else
+            ExpandedContent()
+                .safeAreaInset(
+                    edge: .top,
+                    spacing: spacing
+                )
+                {
+                    navigationBar
+                }
+            #endif
+
+        case .overlay:
+            #if os(iOS)
+            ExpandedContent()
+                .toolbar( .hidden, for: .navigationBar )
+                .overlay( alignment: .top )
+                {
+                    navigationBar
+                }
+            #else
+            ExpandedContent()
+                .overlay( alignment: .top )
+                {
+                    navigationBar
+                }
             #endif
         }
     }
@@ -556,6 +598,14 @@ public extension View
         environment( \.routerNavigationBarProvider, AnyRouterNavigationBarProvider(
             configuration: configuration,
             contentSpacing: { $0[keyPath: contentSpacing] },
+            content: content ) )
+    }
+
+    func routerNavigationBar<Configuration, Bar: View>( default configuration: Configuration, contentPlacement: KeyPath<Configuration, RouterNavigationBarContentPlacement>, @ViewBuilder content: @escaping ( Configuration, RouterNavigationBarContext ) -> Bar ) -> some View
+    {
+        environment( \.routerNavigationBarProvider, AnyRouterNavigationBarProvider(
+            configuration: configuration,
+            contentPlacement: { $0[keyPath: contentPlacement] },
             content: content ) )
     }
 

@@ -113,4 +113,17 @@ extension View
             }
         )
     }
+    
+    func topAppBarTransparent() -> some View
+    {
+        routerNavigationBar(
+            update:
+            {
+                (cfg: inout NavigationBarConfig) in
+                
+                cfg.style = .transparent
+                cfg.contentPlacement = .overlay
+            }
+        )
+    }
 }

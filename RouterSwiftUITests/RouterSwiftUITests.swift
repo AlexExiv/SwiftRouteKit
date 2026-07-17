@@ -117,6 +117,7 @@ struct TestGateTargetPath: RoutePath, EmptyParamsPath
 private struct TestNavigationBarConfiguration
 {
     var contentSpacing: CGFloat
+    var contentPlacement = RouterNavigationBarContentPlacement.inset( spacing: 8 )
 }
 
 struct TestTextView: RouterView
@@ -868,6 +869,42 @@ struct RouterSwiftUITests
             context: NavigationBarContext( entry ) ) ) == 0 )
     }
 
+    @Test
+    func NavigationBarContentPlacementUsesEntryUpdates() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+        router.Route( TestSettingsPath( section: "next" ) )
+
+        let firstEntry = try #require( router.viewStack.first )
+        let secondEntry = try #require( router.viewStack.last )
+        let store = RouterNavigationBarStore()
+        let provider = AnyRouterNavigationBarProvider(
+            configuration: TestNavigationBarConfiguration( contentSpacing: 0 ),
+            contentPlacement: { $0.contentPlacement } ) {
+                _, _ in
+
+                EmptyView()
+            }
+        let updateToken = UUID()
+
+        store.SetUpdate( entryID: firstEntry.id, token: updateToken, update: AnyRouterNavigationBarUpdate {
+            (configuration: inout TestNavigationBarConfiguration) in
+
+            configuration.contentPlacement = .overlay
+        } )
+
+        #expect( ContentPlacement( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) == .overlay )
+        #expect( ContentPlacement( store.Resolve( provider: provider, entry: secondEntry, context: NavigationBarContext( secondEntry ) ) ) == .inset( spacing: 8 ) )
+
+        let replacementToken = UUID()
+        store.SetReplacement( entryID: firstEntry.id, token: replacementToken ) {
+            AnyView( EmptyView() )
+        }
+
+        #expect( ContentPlacement( store.Resolve( provider: provider, entry: firstEntry, context: NavigationBarContext( firstEntry ) ) ) == .overlay )
+    }
+
     private func NavigationBarContext( _ entry: RouteEntry ) -> RouterNavigationBarContext
     {
         RouterNavigationBarContext( entry: entry, canGoBack: false, back: {} )
@@ -905,9 +942,19 @@ struct RouterSwiftUITests
 
     private func ContentSpacing( _ resolution: RouterNavigationBarResolution ) -> CGFloat?
     {
-        if case .custom( _, let contentSpacing ) = resolution
+        if case .custom( _, .inset( let contentSpacing ) ) = resolution
         {
             return contentSpacing
+        }
+
+        return nil
+    }
+
+    private func ContentPlacement( _ resolution: RouterNavigationBarResolution ) -> RouterNavigationBarContentPlacement?
+    {
+        if case .custom( _, let contentPlacement ) = resolution
+        {
+            return contentPlacement
         }
 
         return nil
