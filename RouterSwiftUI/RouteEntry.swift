@@ -10,6 +10,7 @@ public final class RouteEntry: Identifiable, Hashable
     public let presentationStyle: RoutePresentationStyle
     public let containerStyle: RouteContainerStyle
     public let resultProvider: ResultProvider
+    let resultBinding: RouteResultBinding?
     public private( set ) weak var router: ( any Router )?
 
     public var viewModel: RouterViewModel?
@@ -23,6 +24,7 @@ public final class RouteEntry: Identifiable, Hashable
         self.presentationStyle = presentationStyle
         self.containerStyle = containerStyle
         self.router = router
+        self.resultBinding = resultBinding
         self.resultProvider = ResultProvider( key: id, resultBinding: resultBinding )
     }
 

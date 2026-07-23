@@ -10,6 +10,7 @@ struct RouteDeclaration
     let singleTop: String
     let animation: String?
     let middlewares: [String]
+    let chainPaths: [String]
     let file: String
 }
 
@@ -101,6 +102,9 @@ func Scan( files: [String] ) throws -> ( routes: [RouteDeclaration], globals: [G
                 let middlewares = declaration.attributes
                     .first( where: { $0.name == "UseMiddlewares" } )
                     .map { ParseTypeList( $0.arguments ) } ?? []
+                let chainPaths = try declaration.attributes
+                    .first( where: { $0.name == "Chain" } )
+                    .map { try ParseSelfTypeList( $0.arguments, attribute: "@Chain", file: file ) } ?? []
 
                 routes.append( RouteDeclaration(
                     controller: declaration.name,
@@ -109,7 +113,12 @@ func Scan( files: [String] ) throws -> ( routes: [RouteDeclaration], globals: [G
                     singleTop: ParseSingleTop( routeAttribute.arguments ),
                     animation: ParseTypeArgument( "animation", in: routeAttribute.arguments ),
                     middlewares: middlewares,
+                    chainPaths: chainPaths,
                     file: file ) )
+            }
+            else if declaration.attributes.contains( where: { $0.name == "Chain" } )
+            {
+                throw GeneratorError( description: "\(file): @Chain must be used together with @Route on \(declaration.name)." )
             }
 
             if let globalAttribute = declaration.attributes.first( where: { $0.name == "GlobalMiddleware" } )
@@ -148,7 +157,22 @@ func Validate( routes: [RouteDeclaration] ) throws
             throw GeneratorError( description: "\(route.file): duplicate RoutePath registration \(route.path). Already used by \(existing)." )
         }
 
+        try ValidateChainPaths( route.chainPaths, route: route )
         paths[route.path] = route.controller
+    }
+}
+
+func ValidateChainPaths( _ chainPaths: [String], route: RouteDeclaration ) throws
+{
+    var paths = Set<String>()
+    for path in chainPaths
+    {
+        if paths.contains( path )
+        {
+            throw GeneratorError( description: "\(route.file): duplicate @Chain path \(path) in \(route.controller)." )
+        }
+
+        paths.insert( path )
     }
 }
 
@@ -198,12 +222,14 @@ func Render(
     {
         let animation = route.animation.map { "\(TrimSelf( $0 )).self" } ?? "nil"
         let middlewares = route.middlewares.map { "\(TrimSelf( $0 )).self" }.joined( separator: ", " )
+        let chainPaths = route.chainPaths.map { "\(TrimSelf( $0 )).self" }.joined( separator: ", " )
         lines.append( "                RouteRegistration(" )
         lines.append( "                    \(route.controller)()," )
         lines.append( "                    uri: \(StringLiteral( route.uri ))," )
         lines.append( "                    singleTop: .\(route.singleTop)," )
         lines.append( "                    animationType: \(animation)," )
-        lines.append( "                    middlewareTypes: [\(middlewares)])," )
+        lines.append( "                    middlewareTypes: [\(middlewares)]," )
+        lines.append( "                    chainPathTypes: [\(chainPaths)])," )
     }
 
     lines.append( "            ]," )
@@ -365,7 +391,30 @@ func ParseTypeList( _ source: String ) -> [String]
         .split( separator: "," )
         .map { $0.trimmingCharacters( in: .whitespacesAndNewlines ) }
         .filter { $0.isEmpty == false }
-        .map( TrimSelf )
+        .map {
+            if $0.hasSuffix( ".self" )
+            {
+                return TrimSelf( $0 )
+            }
+
+            return $0
+        }
+}
+
+func ParseSelfTypeList( _ source: String, attribute: String, file: String ) throws -> [String]
+{
+    try source
+        .split( separator: "," )
+        .map { $0.trimmingCharacters( in: .whitespacesAndNewlines ) }
+        .filter { $0.isEmpty == false }
+        .map {
+            if $0.hasSuffix( ".self" )
+            {
+                return TrimSelf( $0 )
+            }
+
+            throw GeneratorError( description: "\(file): \(attribute) argument must be Type.self: \($0)." )
+        }
 }
 
 func TrimSelf( _ value: String ) -> String

@@ -7,6 +7,7 @@ public struct RouteRegistration
     let singleTop: RouteSingleTop
     let animationFactory: ( @MainActor () -> ( any AnimationController )? )?
     let middlewareFactories: [@MainActor () -> any MiddlewareController]
+    let chainPathTypes: [any RoutePath.Type]
 
     @MainActor
     public init(
@@ -14,13 +15,15 @@ public struct RouteRegistration
         uri: String = "",
         singleTop: RouteSingleTop = .none,
         animationType: ( any AnimationController.Type )? = nil,
-        middlewareTypes: [any MiddlewareController.Type] = [] )
+        middlewareTypes: [any MiddlewareController.Type] = [],
+        chainPathTypes: [any RoutePath.Type] = [] )
     {
         self.controller = controller
         self.uri = uri.isEmpty ? nil : uri
         self.singleTop = singleTop
         self.animationFactory = animationType.map( Self.AnimationFactory )
         self.middlewareFactories = middlewareTypes.map( Self.MiddlewareFactory )
+        self.chainPathTypes = chainPathTypes
     }
 
     private static func AnimationFactory( _ type: any AnimationController.Type ) -> @MainActor () -> ( any AnimationController )?
@@ -109,6 +112,7 @@ public final class RouteRegistry
             singleTop: registration.singleTop,
             animationFactory: registration.animationFactory,
             middlewareFactories: registration.middlewareFactories )
+        registration.controller.SetChainPaths( registration.chainPathTypes )
 
         controllers.append( registration.controller )
     }

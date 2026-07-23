@@ -10,5 +10,9 @@ public macro UseMiddlewares(
     _ middlewares: Any.Type...) = #externalMacro(module: "RouterSwiftUIMacros", type: "UseMiddlewaresMacro")
 
 @attached(extension)
+public macro Chain(
+    _ paths: Any.Type...) = #externalMacro(module: "RouterSwiftUIMacros", type: "ChainMacro")
+
+@attached(extension)
 public macro GlobalMiddleware(
     order: Int) = #externalMacro(module: "RouterSwiftUIMacros", type: "GlobalMiddlewareMacro")

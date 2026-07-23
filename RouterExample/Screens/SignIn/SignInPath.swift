@@ -10,14 +10,12 @@ struct SignInPath: RoutePath
     }
 }
 
+@Chain( SignConfirmPath.self, SignUpPath.self )
 @Route( uri: "/sign-in" )
-final class SignInRouteController: RouteController<SignInPath, SignInView>
+final class SignInRouteController: RouteControllerVM<SignInPath, SignInViewModel, SignInView>
 {
-    override func OnCreateView( path: SignInPath ) -> SignInView
+    override func OnCreateViewModel( path: SignInPath ) -> SignInViewModel
     {
-        SignInView(
-            path: path,
-            authService: FlowerDependencyContainer.shared.authService
-        )
+        SignInViewModel( next: path.next )
     }
 }

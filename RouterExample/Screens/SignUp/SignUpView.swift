@@ -1,9 +1,9 @@
 import SwiftUI
 import RouterSwiftUI
 
-struct SignInView: RouterView
+struct SignUpView: RouterView
 {
-    @ObservedObject var viewModel: SignInViewModel
+    @ObservedObject var viewModel: SignUpViewModel
     
     var body: some View
     {
@@ -20,22 +20,22 @@ struct SignInView: RouterView
             }
             .frame( height: 80 )
 
-            Button( "Авторизоваться" )
+            Button( "Зарегистрироваться" )
             {
-                viewModel.OnShowConfirm()
+                viewModel.OnSignUp()
             }
             .buttonStyle( .borderedProminent )
             .controlSize( .large )
             .frame( maxWidth: .infinity, maxHeight: .infinity )
         }
-        //.topAppBarTitle( "Авторизация" )
         .topAppBarTransparent()
     }
 }
 
 #Preview
 {
-    SignInView( viewModel: SignInViewModel(
-        next: RouteParams( path: CartPath() )
+    SignUpView( viewModel: SignUpViewModel(
+        next: RouteParams( path: CartPath() ),
+        authService: AuthService()
     ) )
 }

@@ -196,12 +196,87 @@ let cancellable = router.RouteResultPublisher( EditProfilePath( id: 42 ), as: Ed
 The opened screen sends values through its `ResultProvider`:
 
 ```swift
-resultProvider?.Send( EditProfileEvent.changed )
+resultProvider.Send( EditProfileEvent.changed )
 ```
 
 The route result channel is owned by the route lifetime. User code sends values only; it does not close the channel manually.
 
 The router owns route logic only. SwiftUI state lives in `RouterHost` through `SwiftUINavigator`, and commands are delivered through `CommandBuffer` and `SwiftUICommandExecutor`.
+
+## Chain Routes
+
+Use `@Chain` when a route opens a short scenario made of several screens and `Close()` from a chain step should close the whole scenario.
+
+```swift
+struct SignInPath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct SignConfirmPath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct SignUpPath: RoutePath
+{
+    let next: RouteParams
+}
+
+@Chain( SignConfirmPath.self, SignUpPath.self )
+@Route( uri: "/sign-in" )
+final class SignInRouteController: RouteControllerVM<SignInPath, SignInViewModel, SignInView>
+{
+    override func OnCreateViewModel( path: SignInPath ) -> SignInViewModel
+    {
+        SignInViewModel( next: path.next )
+    }
+}
+```
+
+`Back()` closes only the current screen. `Close()` from `SignConfirmPath` or `SignUpPath` closes the chain root and all opened chain steps.
+
+Chain steps reuse the result channel of the chain root, so a result sent from `SignUpViewModel` is delivered to the caller that opened `SignInPath` with `RouteWithResult`, `RouteForResult`, `RouteForResults`, or `RouteResultPublisher`.
+
+A middleware redirect can keep the original route as `RouteParams` and continue it later:
+
+```swift
+final class AuthMiddleware: MiddlewareController
+{
+    func OnRoute( router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
+    {
+        if next.path.Typed( ProfilePath.self ) == nil
+        {
+            return false
+        }
+
+        router.Route( SignInPath( next: next ) )
+        return true
+    }
+}
+```
+
+Keep only the needed immutable values in a view model. Do not store the whole `Path` in the view model.
+
+```swift
+final class SignUpViewModel: RouterViewModel
+{
+    private let next: RouteParams
+    private let authService: AuthService
+
+    init( next: RouteParams, authService: AuthService )
+    {
+        self.next = next
+        self.authService = authService
+    }
+
+    func OnSignUp()
+    {
+        authService.Login()
+        router.Close()?.Route( next )
+    }
+}
+```
 
 ## RoutePath
 
@@ -505,8 +580,8 @@ final class LoginViewModel: RouterViewModel
 {
     func OnLoginFinished( path: LoginPath )
     {
-        router?.Close()
-        router?.Route( path.next )
+        router.Close()
+        router.Route( path.next )
     }
 }
 ```

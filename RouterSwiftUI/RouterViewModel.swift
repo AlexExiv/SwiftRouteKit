@@ -4,8 +4,8 @@ import Foundation
 @MainActor
 open class RouterViewModel: ObservableObject
 {
-    public private(set) weak var router: (any Router)?
-    public private(set) var resultProvider: ResultProvider?
+    public private(set) weak var router: (any Router)!
+    public private(set) var resultProvider: ResultProvider!
 
     private var isInitialized = false
 

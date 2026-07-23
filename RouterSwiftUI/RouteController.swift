@@ -22,6 +22,7 @@ public protocol AnyRouteController: AnyObject
     func OnBeforeRoute( router: any Router, current: AnyRoutePath, next: RouteParams ) -> Bool
     func OnRoute( router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
     func OnClose( router: any Router, current: AnyRoutePath, previous: AnyRoutePath? ) -> Bool
+    func SetChainPaths( _ pathTypes: [any RoutePath.Type] )
     func IsPartOfChain( path: AnyRoutePath ) -> Bool
 }
 

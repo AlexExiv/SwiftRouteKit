@@ -411,7 +411,7 @@ public class RouterSimple: Router, ObservableObject
 
         do
         {
-            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: params.resultBinding )
+            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: ResultBinding( for: params ) )
             Append( entry )
             return self
         }
@@ -456,7 +456,7 @@ public class RouterSimple: Router, ObservableObject
     {
         do
         {
-            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: params.resultBinding )
+            let entry = try controller.MakeEntry( path: params.path, router: self, resultBinding: ResultBinding( for: params ) )
 
             let replacing = viewStack.last
             if let replacing
@@ -487,9 +487,9 @@ public class RouterSimple: Router, ObservableObject
         CleanupRemovedEntry( entry )
         commandBuffer.Apply( .close( entry ) )
 
-        if closeChain, let chainEntry = viewStack.last( where: { $0.controller.IsPartOfChain( path: entry.path ) } )
+        if closeChain, let chainEntry = FindChainEntry( for: entry.path )
         {
-            return CloseTo( key: chainEntry.id )
+            return CloseTo( key: chainEntry.id )?.Close()
         }
 
         return ThisOrParent()
@@ -530,6 +530,21 @@ public class RouterSimple: Router, ObservableObject
         TryCloseMiddlewares( entry: entry )
         tabsByViewKey[entry.id]?.ReleaseRouters()
         tabsByViewKey[entry.id] = nil
+    }
+
+    private func ResultBinding( for params: RouteParams ) -> RouteResultBinding?
+    {
+        FindChainEntry( for: params.path )?.resultBinding ?? params.resultBinding
+    }
+
+    private func FindChainEntry( for path: AnyRoutePath ) -> RouteEntry?
+    {
+        if let entry = viewStack.last( where: { $0.controller.IsPartOfChain( path: path ) } )
+        {
+            return entry
+        }
+
+        return parent?.FindChainEntry( for: path )
     }
 
     private func SyncExecutor()

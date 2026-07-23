@@ -174,6 +174,19 @@ public struct UseMiddlewaresMacro: ExtensionMacro
     }
 }
 
+public struct ChainMacro: ExtensionMacro
+{
+    public static func expansion(
+        of node: AttributeSyntax,
+        attachedTo declaration: some DeclGroupSyntax,
+        providingExtensionsOf type: some TypeSyntaxProtocol,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax]
+    {
+        []
+    }
+}
+
 public struct GlobalMiddlewareMacro: ExtensionMacro
 {
     public static func expansion(
@@ -193,6 +206,7 @@ struct RouterSwiftUIMacroPlugin: CompilerPlugin
     let providingMacros: [Macro.Type] = [
         RouteMacro.self,
         UseMiddlewaresMacro.self,
+        ChainMacro.self,
         GlobalMiddlewareMacro.self
     ]
 }

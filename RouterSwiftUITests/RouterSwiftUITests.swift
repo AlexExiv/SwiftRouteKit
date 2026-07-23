@@ -114,6 +114,28 @@ struct TestGateTargetPath: RoutePath, EmptyParamsPath
     }
 }
 
+struct TestChainSignInPath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct TestChainSignConfirmPath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct TestChainSignUpPath: RoutePath
+{
+    let next: RouteParams
+}
+
+struct TestChainProtectedPath: RoutePath, EmptyParamsPath
+{
+    init()
+    {
+    }
+}
+
 private struct TestNavigationBarConfiguration
 {
     var contentSpacing: CGFloat
@@ -174,6 +196,39 @@ struct TestGeneratedVMView: RouterView
     }
 }
 
+struct TestChainSignInView: RouterView
+{
+    @ObservedObject
+    var viewModel: TestChainSignInViewModel
+
+    var body: some View
+    {
+        Text( "Sign In" )
+    }
+}
+
+struct TestChainSignConfirmView: RouterView
+{
+    @ObservedObject
+    var viewModel: TestChainSignConfirmViewModel
+
+    var body: some View
+    {
+        Text( "Sign Confirm" )
+    }
+}
+
+struct TestChainSignUpView: RouterView
+{
+    @ObservedObject
+    var viewModel: TestChainSignUpViewModel
+
+    var body: some View
+    {
+        Text( "Sign Up" )
+    }
+}
+
 final class TestProfileViewModel: RouterViewModel
 {
     var id = 0
@@ -187,6 +242,52 @@ final class TestProfileViewModel: RouterViewModel
 final class TestGeneratedViewModel: RouterViewModel
 {
     var title = "Generated VM"
+}
+
+final class TestChainSignInViewModel: RouterViewModel
+{
+    private let next: RouteParams
+
+    init( next: RouteParams )
+    {
+        self.next = next
+    }
+
+    func OnShowConfirm()
+    {
+        router.Route( TestChainSignConfirmPath( next: next ) )
+    }
+}
+
+final class TestChainSignConfirmViewModel: RouterViewModel
+{
+    private let next: RouteParams
+
+    init( next: RouteParams )
+    {
+        self.next = next
+    }
+
+    func OnShowSignUp()
+    {
+        router.Route( TestChainSignUpPath( next: next ) )
+    }
+}
+
+final class TestChainSignUpViewModel: RouterViewModel
+{
+    private let next: RouteParams
+
+    init( next: RouteParams )
+    {
+        self.next = next
+    }
+
+    func OnSignUp()
+    {
+        TestChainAuthMiddleware.isLoggedIn = true
+        router.Close()?.Route( next )
+    }
 }
 
 final class TestAuthMiddleware: MiddlewareController
@@ -223,6 +324,26 @@ final class TestGateMiddleware: MiddlewareController
         guard next.path.Typed( TestGateTargetPath.self ) != nil, Self.allow == false else { return false }
 
         router.Route( TestGatePath( next: next ) )
+        return true
+    }
+}
+
+final class TestChainAuthMiddleware: MiddlewareController
+{
+    static var isLoggedIn = false
+
+    init()
+    {
+    }
+
+    func OnRoute( router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
+    {
+        if next.path.Typed( TestChainProtectedPath.self ) == nil || Self.isLoggedIn
+        {
+            return false
+        }
+
+        router.Route( TestChainSignInPath( next: next ) )
         return true
     }
 }
@@ -402,6 +523,44 @@ final class TestGateTargetController: RouteController<TestGateTargetPath, TestTe
     override func OnCreateView( path: TestGateTargetPath ) -> TestTextView
     {
         TestTextView( text: "Gate Target" )
+    }
+}
+
+@Chain( TestChainSignConfirmPath.self, TestChainSignUpPath.self )
+@Route( uri: "/chain/sign-in" )
+final class TestChainSignInController: RouteControllerVM<TestChainSignInPath, TestChainSignInViewModel, TestChainSignInView>
+{
+    override func OnCreateViewModel( path: TestChainSignInPath ) -> TestChainSignInViewModel
+    {
+        TestChainSignInViewModel( next: path.next )
+    }
+}
+
+@Route( uri: "/chain/sign-confirm" )
+final class TestChainSignConfirmController: RouteControllerVM<TestChainSignConfirmPath, TestChainSignConfirmViewModel, TestChainSignConfirmView>
+{
+    override func OnCreateViewModel( path: TestChainSignConfirmPath ) -> TestChainSignConfirmViewModel
+    {
+        TestChainSignConfirmViewModel( next: path.next )
+    }
+}
+
+@Route( uri: "/chain/sign-up" )
+final class TestChainSignUpController: RouteControllerVM<TestChainSignUpPath, TestChainSignUpViewModel, TestChainSignUpView>
+{
+    override func OnCreateViewModel( path: TestChainSignUpPath ) -> TestChainSignUpViewModel
+    {
+        TestChainSignUpViewModel( next: path.next )
+    }
+}
+
+@Route( uri: "/chain/protected" )
+@UseMiddlewares( TestChainAuthMiddleware.self )
+final class TestChainProtectedController: RouteController<TestChainProtectedPath, TestTextView>
+{
+    override func OnCreateView( path: TestChainProtectedPath ) -> TestTextView
+    {
+        TestTextView( text: "Protected" )
     }
 }
 
@@ -883,6 +1042,95 @@ struct RouterSwiftUITests
         #expect( targetEntry.path.Typed( TestGateTargetPath.self ) != nil )
 
         targetEntry.resultProvider.Send( "done" )
+
+        #expect( values == ["done"] )
+    }
+
+    @Test
+    func GeneratedChainRegistersPaths() throws
+    {
+        let registry = GeneratedRouteRegistry.Make()
+        let controller = try #require( registry.Controller( for: AnyRoutePath( TestChainSignInPath( next: RouteParams( path: TestChainProtectedPath() ) ) ) ) )
+
+        #expect( controller.IsPartOfChain( path: AnyRoutePath( TestChainSignConfirmPath( next: RouteParams( path: TestChainProtectedPath() ) ) ) ) )
+        #expect( controller.IsPartOfChain( path: AnyRoutePath( TestChainSignUpPath( next: RouteParams( path: TestChainProtectedPath() ) ) ) ) )
+        #expect( controller.IsPartOfChain( path: AnyRoutePath( TestHomePath() ) ) == false )
+    }
+
+    @Test
+    func ChainCloseClosesRootAndSteps() throws
+    {
+        let router = MakeRouter()
+        let next = RouteParams( path: TestChainProtectedPath() )
+
+        router.Route( TestHomePath() )
+        router.Route( TestChainSignInPath( next: next ) )
+        router.Route( TestChainSignConfirmPath( next: next ) )
+        router.Route( TestChainSignUpPath( next: next ) )
+
+        router.Close()
+
+        #expect( router.viewStack.count == 1 )
+        #expect( router.viewStack.last?.path.Typed( TestHomePath.self ) != nil )
+    }
+
+    @Test
+    func BackDoesNotCloseWholeChain() throws
+    {
+        let router = MakeRouter()
+        let next = RouteParams( path: TestChainProtectedPath() )
+
+        router.Route( TestHomePath() )
+        router.Route( TestChainSignInPath( next: next ) )
+        router.Route( TestChainSignConfirmPath( next: next ) )
+        router.Route( TestChainSignUpPath( next: next ) )
+
+        router.Back()
+
+        #expect( router.viewStack.count == 3 )
+        #expect( router.viewStack.last?.path.Typed( TestChainSignConfirmPath.self ) != nil )
+    }
+
+    @Test
+    func AuthChainCloseThenRoutesOriginalNext() throws
+    {
+        TestChainAuthMiddleware.isLoggedIn = false
+
+        let router = MakeRouter()
+        router.Route( TestHomePath() )
+        router.Route( TestChainProtectedPath() )
+
+        let signInEntry = try #require( router.viewStack.last )
+        let signInViewModel = try #require( signInEntry.viewModel as? TestChainSignInViewModel )
+        signInViewModel.OnShowConfirm()
+
+        let confirmEntry = try #require( router.viewStack.last )
+        let confirmViewModel = try #require( confirmEntry.viewModel as? TestChainSignConfirmViewModel )
+        confirmViewModel.OnShowSignUp()
+
+        let signUpEntry = try #require( router.viewStack.last )
+        let signUpViewModel = try #require( signUpEntry.viewModel as? TestChainSignUpViewModel )
+        signUpViewModel.OnSignUp()
+
+        #expect( TestChainAuthMiddleware.isLoggedIn )
+        #expect( router.viewStack.count == 2 )
+        #expect( router.viewStack.last?.path.Typed( TestChainProtectedPath.self ) != nil )
+    }
+
+    @Test
+    func ChainResultIsDeliveredFromStep() throws
+    {
+        let router = MakeRouter()
+        let next = RouteParams( path: TestChainProtectedPath() )
+        var values = [String]()
+
+        router.Route( TestHomePath() )
+        router.RouteWithResult( TestChainSignInPath( next: next ) ) { values.append( $0 ) }
+        router.Route( TestChainSignConfirmPath( next: next ) )
+        router.Route( TestChainSignUpPath( next: next ) )
+
+        let signUpEntry = try #require( router.viewStack.last )
+        signUpEntry.resultProvider.Send( "done" )
 
         #expect( values == ["done"] )
     }
