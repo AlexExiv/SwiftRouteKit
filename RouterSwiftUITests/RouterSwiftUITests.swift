@@ -192,6 +192,7 @@ final class TestGeneratedViewModel: RouterViewModel
 final class TestAuthMiddleware: MiddlewareController
 {
     static var allowSecure = false
+    static var secureRouteCount = 0
 
     init(   )
     {
@@ -199,7 +200,10 @@ final class TestAuthMiddleware: MiddlewareController
 
     func OnRoute(    router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
     {
-        guard next.path.Typed(    TestSecurePath.self ) != nil, Self.allowSecure == false else { return false }
+        guard next.path.Typed(    TestSecurePath.self ) != nil else { return false }
+
+        Self.secureRouteCount += 1
+        guard Self.allowSecure == false else { return false }
 
         router.Route(    TestLoginPath(   ) )
         return true
@@ -227,9 +231,16 @@ final class TestGateMiddleware: MiddlewareController
 final class TestGlobalMiddleware: MiddlewareController
 {
     static var routeCount = 0
+    static var beforeRouteCount = 0
 
     init(   )
     {
+    }
+
+    func OnBeforeRoute( router: any Router, current: AnyRoutePath, next: RouteParams ) -> Bool
+    {
+        Self.beforeRouteCount += 1
+        return false
     }
 
     func OnRoute(    router: any Router, previous: AnyRoutePath?, next: RouteParams ) -> Bool
@@ -283,9 +294,17 @@ final class TestSettingsController: RouteController<TestSettingsPath, TestTextVi
 @Route( uri: "/tabs" )
 final class TestTabsController: RouteController<TestTabsPath, TestTextView>
 {
+    static var beforeRouteCount = 0
+
     override func OnCreateView(    path: TestTabsPath ) -> TestTextView
     {
         TestTextView(    text: "Tabs" )
+    }
+
+    override func OnBeforeRoute( router: any Router, current: TestTabsPath, next: RouteParams ) -> Bool
+    {
+        Self.beforeRouteCount += 1
+        return false
     }
 }
 
@@ -477,6 +496,132 @@ struct RouterSwiftUITests
         #expect(    tabs.Router(    for: 0 ).viewStack.count == 1 )
         #expect(    tabs.Router(    for: 0 ).viewStack.last?.path.Typed(    TestTabAPath.self ) != nil )
         #expect(    tabs.Router(    for: 1 ).viewStack.last?.path.Typed(    TestTabBPath.self ) != nil )
+    }
+
+    @Test
+    func ProtectedTabMiddlewareRunsInParentOnSelectionAndPathRouting() throws
+    {
+        TestAuthMiddleware.allowSecure = false
+        TestAuthMiddleware.secureRouteCount = 0
+        TestGlobalMiddleware.beforeRouteCount = 0
+        TestGlobalMiddleware.routeCount = 0
+        TestTabsController.beforeRouteCount = 0
+
+        let router = MakeRouter()
+        router.Route( TestTabsPath() )
+        let tabsEntry = try #require( router.viewStack.last )
+        let descriptors = [
+            RouterTabDescriptor( id: "home", index: 0, title: "Home", rootPath: TestTabAPath() ),
+            RouterTabDescriptor( id: "profile", index: 1, title: "Profile", rootPath: TestSecurePath() )
+        ]
+        let tabs = router.CreateTabs( viewKey: tabsEntry.id, descriptors: descriptors )
+
+        for descriptor in descriptors
+        {
+            tabs.Route( descriptor.index, path: descriptor.rootPath, recreate: false )
+        }
+
+        let homeRouter = tabs.Router( for: 0 )
+        let profileRouter = tabs.Router( for: 1 )
+        let routeCountAfterEagerInitialization = TestGlobalMiddleware.routeCount
+
+        #expect( homeRouter.viewStack.count == 1 )
+        #expect( homeRouter.viewStack.last?.path.Typed( TestTabAPath.self ) != nil )
+        #expect( profileRouter.viewStack.count == 1 )
+        #expect( profileRouter.viewStack.last?.path.Typed( TestSecurePath.self ) != nil )
+        #expect( TestAuthMiddleware.secureRouteCount == 0 )
+        #expect( router.viewStack.count == 1 )
+        #expect( router.viewStack.contains { $0.path.Typed( TestLoginPath.self ) != nil } == false )
+
+        #expect( tabs.Route( 1 ) == false )
+        #expect( tabs.tabIndex == 0 )
+        #expect( TestAuthMiddleware.secureRouteCount == 1 )
+        #expect( TestGlobalMiddleware.routeCount > routeCountAfterEagerInitialization )
+        #expect( TestTabsController.beforeRouteCount > 0 )
+        #expect( TestGlobalMiddleware.beforeRouteCount > 0 )
+        #expect( router.viewStack.count == 2 )
+        #expect( router.viewStack.last?.path.Typed( TestLoginPath.self ) != nil )
+        #expect( router.viewStack.contains { $0.path.Typed( TestSecurePath.self ) != nil } == false )
+        #expect( profileRouter.viewStack.count == 1 )
+        #expect( profileRouter.viewStack.last?.path.Typed( TestSecurePath.self ) != nil )
+
+        TestAuthMiddleware.allowSecure = true
+        let resumed = router.Close()?.Route( RouteParams( path: TestSecurePath(), tabIndex: 1 ) )
+
+        #expect( (resumed as? RouterTabSimple) === profileRouter )
+        #expect( tabs.tabIndex == 1 )
+        #expect( TestAuthMiddleware.secureRouteCount == 2 )
+        #expect( router.viewStack.count == 1 )
+        #expect( profileRouter.viewStack.count == 1 )
+        #expect( profileRouter.viewStack.last?.path.Typed( TestSecurePath.self ) != nil )
+
+        #expect( tabs.Route( 0 ) )
+        TestAuthMiddleware.allowSecure = false
+        let routed = router.Route( TestSecurePath() )
+
+        #expect( routed == nil )
+        #expect( tabs.tabIndex == 0 )
+        #expect( TestAuthMiddleware.secureRouteCount == 3 )
+        #expect( router.viewStack.count == 2 )
+        #expect( router.viewStack.last?.path.Typed( TestLoginPath.self ) != nil )
+        #expect( profileRouter.viewStack.count == 1 )
+        #expect( profileRouter.viewStack.last?.path.Typed( TestSecurePath.self ) != nil )
+    }
+
+    @Test
+    func TabUniqueClassMatchesAnExistingRootByPathType() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestTabsPath() )
+        let tabsEntry = try #require( router.viewStack.last )
+        let descriptors = [
+            RouterTabDescriptor( id: "home", index: 0, title: "Home", rootPath: TestTabAPath() ),
+            RouterTabDescriptor( id: "settings", index: 1, title: "Settings", rootPath: TestSettingsPath( section: "root" ) )
+        ]
+        let tabs = router.CreateTabs( viewKey: tabsEntry.id, descriptors: descriptors, tabUnique: .class )
+
+        for descriptor in descriptors
+        {
+            tabs.Route( descriptor.index, path: descriptor.rootPath, recreate: false )
+        }
+
+        let routed = tabs.Router( for: 0 ).Route( TestSettingsPath( section: "other" ) )
+
+        #expect( (routed as? RouterTabSimple) === tabs.Router( for: 1 ) )
+        #expect( tabs.tabIndex == 1 )
+        #expect( tabs.Router( for: 0 ).viewStack.count == 1 )
+        #expect( tabs.Router( for: 1 ).viewStack.last?.path.Typed( TestSettingsPath.self )?.section == "root" )
+    }
+
+    @Test
+    func TabUniqueEqualMatchesOnlyAnEqualExistingRoot() throws
+    {
+        let router = MakeRouter()
+        router.Route( TestTabsPath() )
+        let tabsEntry = try #require( router.viewStack.last )
+        let descriptors = [
+            RouterTabDescriptor( id: "home", index: 0, title: "Home", rootPath: TestTabAPath() ),
+            RouterTabDescriptor( id: "settings", index: 1, title: "Settings", rootPath: TestSettingsPath( section: "root" ) )
+        ]
+        let tabs = router.CreateTabs( viewKey: tabsEntry.id, descriptors: descriptors, tabUnique: .equal )
+
+        for descriptor in descriptors
+        {
+            tabs.Route( descriptor.index, path: descriptor.rootPath, recreate: false )
+        }
+
+        let routed = tabs.Router( for: 0 ).Route( TestSettingsPath( section: "root" ) )
+
+        #expect( (routed as? RouterTabSimple) === tabs.Router( for: 1 ) )
+        #expect( tabs.tabIndex == 1 )
+
+        #expect( tabs.Route( 0 ) )
+        tabs.Router( for: 0 ).Route( TestSettingsPath( section: "other" ) )
+
+        #expect( tabs.tabIndex == 0 )
+        #expect( tabs.Router( for: 0 ).viewStack.count == 2 )
+        #expect( tabs.Router( for: 0 ).viewStack.last?.path.Typed( TestSettingsPath.self )?.section == "other" )
+        #expect( tabs.Router( for: 1 ).viewStack.last?.path.Typed( TestSettingsPath.self )?.section == "root" )
     }
 
     @Test

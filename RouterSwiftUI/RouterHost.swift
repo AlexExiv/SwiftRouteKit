@@ -30,7 +30,9 @@ public struct RouterHost<RootPath: RoutePath>: View
                 RouterEntryView( entry: $0 )
                     .presentationDetents( Detents( for: $0 ) )
             }
-            .RouterFullScreenCover( item: navigator.fullScreenBinding )
+            .RouterFullScreenCover( item: navigator.fullScreenBinding ) {
+                NavigationEntryContent( $0, canGoBack: router.hasPreviousScreen )
+            }
             .environment( \.router, router )
             .environment( \.routerNavigationBarStore, navigationBarStore )
             .onAppear {
@@ -51,9 +53,9 @@ public struct RouterHost<RootPath: RoutePath>: View
     @ViewBuilder
     private func RootContent() -> some View
     {
-        if navigator.isNoNavigationStack
+        if navigator.root?.containerStyle == .tabs
         {
-            RouterRootView( navigator: navigator, router: router, rootPath: rootPath )
+            TabsRootContent()
         }
         else
         {
@@ -63,6 +65,31 @@ public struct RouterHost<RootPath: RoutePath>: View
                         NavigationEntryContent( $0 )
                     }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func TabsRootContent() -> some View
+    {
+        ZStack
+        {
+            if let root = navigator.root
+            {
+                RouterEntryView( entry: root )
+            }
+            else
+            {
+                Color.clear
+            }
+
+            NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
+                Color.clear
+                    .navigationDestination( for: RouteEntry.self ) {
+                        NavigationEntryContent( $0, canGoBack: true )
+                    }
+            }
+            .opacity( navigator.stack.isEmpty ? 0 : 1 )
+            .allowsHitTesting( navigator.stack.isEmpty == false )
         }
     }
 
@@ -81,14 +108,20 @@ public struct RouterHost<RootPath: RoutePath>: View
 
     private func NavigationEntryContent( _ entry: RouteEntry ) -> some View
     {
+        NavigationEntryContent( entry, canGoBack: navigator.stack.isEmpty == false )
+    }
+
+    private func NavigationEntryContent( _ entry: RouteEntry, canGoBack: Bool ) -> some View
+    {
         RouterNavigationBarEntryHost(
             store: navigationBarStore,
             provider: navigationBarProvider,
             entry: entry,
-            canGoBack: navigator.stack.isEmpty == false,
+            canGoBack: canGoBack,
             back: { _ = router.Back() } ) {
                 RouterEntryView( entry: entry )
             }
+            .environment( \.routerNavigationBarStore, navigationBarStore )
     }
 
     private func Detents( for entry: RouteEntry ) -> Set<PresentationDetent>
@@ -98,30 +131,6 @@ public struct RouterHost<RootPath: RoutePath>: View
         return detents
     }
 
-}
-
-private struct RouterRootView<RootPath: RoutePath>: View
-{
-    @ObservedObject
-    var navigator: SwiftUINavigator
-
-    let router: RouterSimple
-    let rootPath: RootPath?
-
-    var body: some View
-    {
-        Group {
-            if let root = navigator.root
-            {
-                RouterEntryView( entry: root )
-            }
-            else
-            {
-                Color.clear
-            }
-        }
-        .environment( \.router, router )
-    }
 }
 
 public struct RouterEntryView: View
@@ -204,7 +213,9 @@ private struct _AnyRouterHost: View
                 RouterEntryView( entry: $0 )
                     .presentationDetents( Detents( for: $0 ) )
             }
-            .RouterFullScreenCover( item: navigator.fullScreenBinding )
+            .RouterFullScreenCover( item: navigator.fullScreenBinding ) {
+                NavigationEntryContent( $0, canGoBack: router.hasPreviousScreen )
+            }
             .environment( \.router, router )
             .environment( \.routerNavigationBarStore, navigationBarStore )
             .onAppear {
@@ -225,9 +236,9 @@ private struct _AnyRouterHost: View
     @ViewBuilder
     private func RootContent() -> some View
     {
-        if navigator.isNoNavigationStack
+        if navigator.root?.containerStyle == .tabs
         {
-            RootView()
+            TabsRootContent()
         }
         else
         {
@@ -237,6 +248,31 @@ private struct _AnyRouterHost: View
                         NavigationEntryContent( $0 )
                     }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func TabsRootContent() -> some View
+    {
+        ZStack
+        {
+            if let root = navigator.root
+            {
+                RouterEntryView( entry: root )
+            }
+            else
+            {
+                Color.clear
+            }
+
+            NavigationStack( path: RouterStackBinding( navigator: navigator, router: router ) ) {
+                Color.clear
+                    .navigationDestination( for: RouteEntry.self ) {
+                        NavigationEntryContent( $0, canGoBack: true )
+                    }
+            }
+            .opacity( navigator.stack.isEmpty ? 0 : 1 )
+            .allowsHitTesting( navigator.stack.isEmpty == false )
         }
     }
 
@@ -255,27 +291,20 @@ private struct _AnyRouterHost: View
 
     private func NavigationEntryContent( _ entry: RouteEntry ) -> some View
     {
+        NavigationEntryContent( entry, canGoBack: navigator.stack.isEmpty == false )
+    }
+
+    private func NavigationEntryContent( _ entry: RouteEntry, canGoBack: Bool ) -> some View
+    {
         RouterNavigationBarEntryHost(
             store: navigationBarStore,
             provider: navigationBarProvider,
             entry: entry,
-            canGoBack: navigator.stack.isEmpty == false,
+            canGoBack: canGoBack,
             back: { _ = router.Back() } ) {
                 RouterEntryView( entry: entry )
             }
-    }
-
-    @ViewBuilder
-    private func RootView() -> some View
-    {
-        if let root = navigator.root
-        {
-            RouterEntryView( entry: root )
-        }
-        else
-        {
-            Color.clear
-        }
+            .environment( \.routerNavigationBarStore, navigationBarStore )
     }
 
     private func Detents( for entry: RouteEntry ) -> Set<PresentationDetent>
@@ -290,15 +319,15 @@ private struct _AnyRouterHost: View
 private extension View
 {
     @ViewBuilder
-    func RouterFullScreenCover( item: Binding<RouteEntry?> ) -> some View
+    func RouterFullScreenCover<Content: View>( item: Binding<RouteEntry?>, @ViewBuilder content: @escaping ( RouteEntry ) -> Content ) -> some View
     {
         #if os(iOS)
         fullScreenCover( item: item ) {
-            RouterEntryView( entry: $0 )
+            content( $0 )
         }
         #else
         sheet( item: item ) {
-            RouterEntryView( entry: $0 )
+            content( $0 )
         }
         #endif
     }

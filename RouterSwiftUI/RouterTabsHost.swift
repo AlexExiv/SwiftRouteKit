@@ -1,6 +1,10 @@
 import Combine
 import SwiftUI
 
+#if os(iOS)
+import UIKit
+#endif
+
 public struct RouterTabsHost<Label: View>: View
 {
     @Environment( \.router )
@@ -32,13 +36,26 @@ public struct RouterTabsHost<Label: View>: View
         Group {
             if let tabs = state.tabs
             {
-                TabView( selection: Binding(
-                    get: { state.selectedTab },
-                    set: { _ = tabs.Route( $0 ) } ) ) {
-                    ForEach( descriptors ) {
-                        TabContent( $0, tabs: tabs )
+                #if os(iOS)
+                ZStack( alignment: .bottom )
+                {
+                    TabsContent( tabs )
+
+                    RouterSystemTabBar(
+                        descriptors: descriptors,
+                        selectedIndex: state.selectedTab
+                    ) {
+                        tabs.Route( $0 )
                     }
+                    .frame(
+                        width: CGFloat( descriptors.count ) * 112,
+                        height: 72
+                    )
+                    .padding( .bottom, -6 )
                 }
+                #else
+                TabsContent( tabs )
+                #endif
             }
             else
             {
@@ -64,9 +81,37 @@ public struct RouterTabsHost<Label: View>: View
 
     private func TabContent( _ descriptor: RouterTabDescriptor, tabs: RouterTabs ) -> some View
     {
+        #if os(iOS)
+        AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
+        #else
         AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
             .tabItem { label( descriptor ) }
             .tag( descriptor.index )
+        #endif
+    }
+
+    private func TabsContent( _ tabs: RouterTabs ) -> some View
+    {
+        #if os(iOS)
+        ZStack
+        {
+            ForEach( descriptors ) { descriptor in
+                TabContent( descriptor, tabs: tabs )
+                    .opacity( state.selectedTab == descriptor.index ? 1 : 0 )
+                    .allowsHitTesting( state.selectedTab == descriptor.index )
+                    .accessibilityHidden( state.selectedTab != descriptor.index )
+            }
+        }
+        .frame( maxWidth: .infinity, maxHeight: .infinity )
+        #else
+        TabView( selection: Binding(
+            get: { state.selectedTab },
+            set: { _ in } ) ) {
+            ForEach( descriptors ) {
+                TabContent( $0, tabs: tabs )
+            }
+        }
+        #endif
     }
 }
 
@@ -96,6 +141,77 @@ private final class RouterTabsHostState: ObservableObject
         tabs?.tabChangeCallback = nil
     }
 }
+
+#if os(iOS)
+private struct RouterSystemTabBar: UIViewRepresentable
+{
+    let descriptors: [RouterTabDescriptor]
+    let selectedIndex: Int
+    let route: (Int) -> Bool
+
+    func makeCoordinator() -> Coordinator
+    {
+        Coordinator()
+    }
+
+    func makeUIView( context: Context ) -> UITabBar
+    {
+        let tabBar = UITabBar()
+        tabBar.delegate = context.coordinator
+        tabBar.isTranslucent = true
+        tabBar.backgroundColor = .clear
+
+        Configure( tabBar )
+        return tabBar
+    }
+
+    func updateUIView( _ tabBar: UITabBar, context: Context )
+    {
+        context.coordinator.route = route
+        context.coordinator.selectedIndex = selectedIndex
+        Configure( tabBar )
+    }
+
+    private func Configure( _ tabBar: UITabBar )
+    {
+        let currentTags = tabBar.items?.map( \.tag ) ?? []
+        let nextTags = descriptors.map( \.index )
+
+        if currentTags != nextTags
+        {
+            let items = descriptors.map {
+                let item = UITabBarItem(
+                    title: $0.title,
+                    image: UIImage( systemName: $0.systemImage ?? "circle" ),
+                    tag: $0.index
+                )
+                return item
+            }
+
+            tabBar.setItems( items, animated: false )
+        }
+
+        tabBar.selectedItem = tabBar.items?.first { $0.tag == selectedIndex }
+    }
+
+    final class Coordinator: NSObject, UITabBarDelegate
+    {
+        var route: ((Int) -> Bool)?
+        var selectedIndex = 0
+
+        func tabBar( _ tabBar: UITabBar, didSelect item: UITabBarItem )
+        {
+            if route?( item.tag ) != true
+            {
+                DispatchQueue.main.async { [weak tabBar, selectedIndex] in
+                    tabBar?.selectedItem = tabBar?.items?.first { $0.tag == selectedIndex }
+                }
+                return
+            }
+        }
+    }
+}
+#endif
 
 public extension RouterTabsHost where Label == SwiftUI.Label<Text, Image>
 {

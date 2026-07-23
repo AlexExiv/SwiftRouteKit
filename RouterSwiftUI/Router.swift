@@ -350,16 +350,19 @@ public class RouterSimple: Router, ObservableObject
             }
         }
 
-        if targetController.OnRoute( router: self, previous: viewStack.last?.path, next: next )
+        if parent == nil || !viewStack.isEmpty
         {
-            return true
-        }
-
-        for middleware in targetController.localMiddlewares + registry.globalMiddlewares
-        {
-            if middleware.OnRoute( router: self, previous: viewStack.last?.path, next: next )
+            if targetController.OnRoute( router: self, previous: viewStack.last?.path, next: next )
             {
                 return true
+            }
+
+            for middleware in targetController.localMiddlewares + registry.globalMiddlewares
+            {
+                if middleware.OnRoute( router: self, previous: viewStack.last?.path, next: next )
+                {
+                    return true
+                }
             }
         }
 

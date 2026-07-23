@@ -108,6 +108,9 @@ public final class RouterTabs: ObservableObject
         guard let descriptor = descriptors.first( where: { $0.index == index } ),
               let controller = parent.registry.Controller( for: descriptor.rootPath ) else { return false }
 
+        let targetRouter = Router( for: index )
+        guard !targetRouter.viewStack.isEmpty else { return false }
+
         let params = RouteParams( path: descriptor.rootPath, tabIndex: index )
         guard parent.TryRouteMiddlewares( next: params, targetController: controller ) == false else { return false }
 

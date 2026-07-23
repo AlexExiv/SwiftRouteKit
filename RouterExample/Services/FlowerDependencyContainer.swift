@@ -13,10 +13,16 @@ final class FlowerDependencyContainer: ObservableObject
     
     let flowerService: FlowerServiceProtocol
     let cartService: CartServiceProtocol
+    let authService: AuthServiceProtocol
     
-    init( flowerService: FlowerServiceProtocol = FlowerService(), cartService: CartServiceProtocol = CartService() )
+    init(
+        flowerService: FlowerServiceProtocol = FlowerService(),
+        cartService: CartServiceProtocol = CartService(),
+        authService: AuthServiceProtocol = AuthService()
+    )
     {
         self.flowerService = flowerService
         self.cartService = cartService
+        self.authService = authService
     }
 }

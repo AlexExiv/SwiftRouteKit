@@ -8,7 +8,7 @@
 import SwiftUI
 import RouterSwiftUI
 
-struct FlowerListView<ViewModel: FlowerListViewModel>: RouterView
+struct FlowerListView<ViewModel: FlowerListViewModel>: RouterFullScreenView
 {
     @Environment( \.router ) private var router
     @StateObject private var viewModel: ViewModel
@@ -24,7 +24,7 @@ struct FlowerListView<ViewModel: FlowerListViewModel>: RouterView
             FlowerButton( $0 )
         }
         .topAppBarTitle( "Цветы" )
-        .topAppBarTransparent()
+        //.topAppBarTransparent()
         .onAppear
         {
             viewModel.Refresh()

@@ -8,6 +8,7 @@ struct CartPath: RoutePath, EmptyParamsPath
 }
 
 @Route( uri: "/cart", singleTop: .class )
+@UseMiddlewares( AuthMiddleware.self )
 final class CartRouteController: RouteController<CartPath, CartView<CartViewModelImpl>>
 {
     override func OnCreateView( path: CartPath ) -> CartView<CartViewModelImpl>
