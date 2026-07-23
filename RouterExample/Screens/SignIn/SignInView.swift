@@ -16,15 +16,30 @@ struct SignInView: RouterFullScreenView
     
     var body: some View
     {
-        Button( "Авторизоваться" )
+        VStack( spacing: 0 )
         {
-            authService.login()
-            router.Close()?.Route( path.next )
+            GeometryReader
+            {
+                proxy in
+
+                Color.blue
+                    .frame( maxWidth: .infinity )
+                    .frame( height: proxy.safeAreaInsets.top + 80 )
+                    .ignoresSafeArea( edges: .top )
+            }
+            .frame( height: 80 )
+
+            Button( "Авторизоваться" )
+            {
+                authService.login()
+                router.Close()?.Route( path.next )
+            }
+            .buttonStyle( .borderedProminent )
+            .controlSize( .large )
+            .frame( maxWidth: .infinity, maxHeight: .infinity )
         }
-        .buttonStyle( .borderedProminent )
-        .controlSize( .large )
-        .frame( maxWidth: .infinity, maxHeight: .infinity )
         //.topAppBarTitle( "Авторизация" )
+        .topAppBarTransparent()
     }
 }
 

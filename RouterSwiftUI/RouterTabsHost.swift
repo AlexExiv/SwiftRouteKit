@@ -182,7 +182,7 @@ private struct RouterSystemTabBar: UIViewRepresentable
             let items = descriptors.map {
                 let item = UITabBarItem(
                     title: $0.title,
-                    image: UIImage( systemName: $0.systemImage ?? "circle" ),
+                    image: UIImage( named: $0.systemImage ?? "" ) ?? UIImage( systemName: $0.systemImage ?? "circle" ),
                     tag: $0.index
                 )
                 return item
