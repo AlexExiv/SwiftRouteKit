@@ -33,6 +33,14 @@ private struct RouterNavigationBarStoreEnvironmentKey: EnvironmentKey
     }
 }
 
+private struct RouterContentBottomInsetEnvironmentKey: EnvironmentKey
+{
+    static var defaultValue: CGFloat
+    {
+        0
+    }
+}
+
 public extension EnvironmentValues
 {
     var router: any Router
@@ -57,6 +65,12 @@ public extension EnvironmentValues
     {
         get { self[RouterNavigationBarStoreEnvironmentKey.self] }
         set { self[RouterNavigationBarStoreEnvironmentKey.self] = newValue }
+    }
+
+    internal var routerContentBottomInset: CGFloat
+    {
+        get { self[RouterContentBottomInsetEnvironmentKey.self] }
+        set { self[RouterContentBottomInsetEnvironmentKey.self] = newValue }
     }
 }
 

@@ -135,6 +135,9 @@ public struct RouterHost<RootPath: RoutePath>: View
 
 public struct RouterEntryView: View
 {
+    @Environment( \.routerContentBottomInset )
+    private var routerContentBottomInset
+
     public let entry: RouteEntry
 
     public init( entry: RouteEntry )
@@ -169,6 +172,39 @@ public struct RouterEntryView: View
             }
         }
         .environment( \.routeEntry, entry )
+        .modifier( RouterContentBottomInsetModifier( contentBottomInset: ContentBottomInset() ) )
+    }
+
+    private func ContentBottomInset() -> CGFloat
+    {
+        if entry.isPush
+        {
+            return routerContentBottomInset
+        }
+
+        return 0
+    }
+}
+
+private struct RouterContentBottomInsetModifier: ViewModifier
+{
+    let contentBottomInset: CGFloat
+
+    @ViewBuilder
+    func body( content: Content ) -> some View
+    {
+        if contentBottomInset > 0
+        {
+            content
+                .safeAreaInset( edge: .bottom )
+                {
+                    Color.clear.frame( height: contentBottomInset )
+                }
+        }
+        else
+        {
+            content
+        }
     }
 }
 

@@ -8,7 +8,7 @@
 import SwiftUI
 import RouterSwiftUI
 
-struct FlowerListView<ViewModel: FlowerListViewModel>: RouterFullScreenView
+struct FlowerListView<ViewModel: FlowerListViewModel>: RouterView
 {
     @Environment( \.router ) private var router
     @StateObject private var viewModel: ViewModel

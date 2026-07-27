@@ -20,14 +20,16 @@ public struct RouterTabsHost<Label: View>: View
     private let tabRouteInParent: Bool
     private let backToFirst: Bool
     private let tabUnique: RouteTabUnique
+    private let contentBottomInset: CGFloat
     private let label: (RouterTabDescriptor) -> Label
 
-    public init( descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class, @ViewBuilder label: @escaping ( RouterTabDescriptor ) -> Label )
+    public init( descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class, contentBottomInset: CGFloat = 72, @ViewBuilder label: @escaping ( RouterTabDescriptor ) -> Label )
     {
         self.descriptors = descriptors
         self.tabRouteInParent = tabRouteInParent
         self.backToFirst = backToFirst
         self.tabUnique = tabUnique
+        self.contentBottomInset = contentBottomInset
         self.label = label
     }
 
@@ -83,6 +85,7 @@ public struct RouterTabsHost<Label: View>: View
     {
         #if os(iOS)
         AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
+            .environment( \.routerContentBottomInset, contentBottomInset )
         #else
         AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
             .tabItem { label( descriptor ) }
@@ -215,9 +218,9 @@ private struct RouterSystemTabBar: UIViewRepresentable
 
 public extension RouterTabsHost where Label == SwiftUI.Label<Text, Image>
 {
-    init( descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class )
+    init( descriptors: [RouterTabDescriptor], tabRouteInParent: Bool = false, backToFirst: Bool = true, tabUnique: RouteTabUnique = .class, contentBottomInset: CGFloat = 72 )
     {
-        self.init( descriptors: descriptors, tabRouteInParent: tabRouteInParent, backToFirst: backToFirst, tabUnique: tabUnique ) {
+        self.init( descriptors: descriptors, tabRouteInParent: tabRouteInParent, backToFirst: backToFirst, tabUnique: tabUnique, contentBottomInset: contentBottomInset ) {
                 Label( $0.title, systemImage: $0.systemImage ?? "circle" )
             }
     }
