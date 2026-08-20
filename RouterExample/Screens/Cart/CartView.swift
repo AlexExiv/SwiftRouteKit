@@ -12,6 +12,16 @@ struct CartView<ViewModel: CartViewModel>: RouterView
 {
     @Environment( \.router ) private var router
     @StateObject private var viewModel: ViewModel
+
+    private var cartTitle: String
+    {
+        if viewModel.items.isEmpty
+        {
+            return "Cart empty"
+        }
+
+        return "Cart items"
+    }
     
     init( viewModel: ViewModel )
     {
@@ -33,8 +43,7 @@ struct CartView<ViewModel: CartViewModel>: RouterView
                 }
             }
         }
-        .navigationTitle( "Cart" )
-        .topAppBarTitle( "Cart" )
+        .topAppBarTitle( cartTitle )
     }
 
     private func ItemRow( _ item: CartItem ) -> some View

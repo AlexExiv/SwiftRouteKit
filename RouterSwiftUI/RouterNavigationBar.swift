@@ -457,12 +457,12 @@ private struct RouterNavigationBarValueUpdateModifier<Value: Equatable, Configur
     func body( content: Content ) -> some View
     {
         content
-            .onAppear { Register() }
+            .onAppear { Register( value: value ) }
             .onDisappear { Unregister() }
-            .onChange( of: value ) { _ in Register() }
+            .onChange( of: value ) { Register( value: $0 ) }
     }
 
-    private func Register()
+    private func Register( value: Value )
     {
         guard let routeEntry, let store else { return }
 

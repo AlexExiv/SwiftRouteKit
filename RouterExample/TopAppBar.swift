@@ -105,9 +105,10 @@ extension View
     func topAppBarTitle( _ title: String ) -> some View
     {
         routerNavigationBar(
+            value: title,
             update:
             {
-                (cfg: inout NavigationBarConfig) in
+                (cfg: inout NavigationBarConfig, title: String) in
                 
                 cfg.title = title
             }
