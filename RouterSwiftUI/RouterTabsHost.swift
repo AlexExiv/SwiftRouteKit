@@ -39,21 +39,22 @@ public struct RouterTabsHost<Label: View>: View
             if let tabs = state.tabs
             {
                 #if os(iOS)
-                ZStack( alignment: .bottom )
-                {
+                GeometryReader { proxy in
                     TabsContent( tabs )
-
-                    RouterSystemTabBar(
-                        descriptors: descriptors,
-                        selectedIndex: state.selectedTab
-                    ) {
-                        tabs.Route( $0 )
-                    }
-                    .frame(
-                        width: CGFloat( descriptors.count ) * 112,
-                        height: 72
-                    )
-                    .padding( .bottom, -6 )
+                        .overlay( alignment: .bottom )
+                        {
+                            RouterSystemTabBar(
+                                descriptors: descriptors,
+                                selectedIndex: state.selectedTab
+                            ) {
+                                tabs.Route( $0 )
+                            }
+                            .frame(
+                                width: TabBarWidth( availableWidth: proxy.size.width ),
+                                height: 72
+                            )
+                            .padding( .bottom, -6 )
+                        }
                 }
                 #else
                 TabsContent( tabs )
@@ -115,6 +116,13 @@ public struct RouterTabsHost<Label: View>: View
             }
         }
         #endif
+    }
+
+    private func TabBarWidth( availableWidth: CGFloat ) -> CGFloat
+    {
+        let count = CGFloat( descriptors.count )
+        let preferredItemWidth = max( 72, 128 - count * 8 )
+        return min( count * preferredItemWidth, availableWidth )
     }
 }
 

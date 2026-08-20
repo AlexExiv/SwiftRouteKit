@@ -27,6 +27,27 @@ struct MainTabsView: RouterTabsView
                     title: "Корзина",
                     systemImage: "basket.fill",
                     rootPath: CartPath()
+                ),
+                RouterTabDescriptor(
+                    id: "tab2",
+                    index: 2,
+                    title: "Tab 2",
+                    systemImage: "2.circle.fill",
+                    rootPath: Tab2Path()
+                ),
+                RouterTabDescriptor(
+                    id: "tab3",
+                    index: 3,
+                    title: "Tab 3",
+                    systemImage: "3.circle.fill",
+                    rootPath: Tab3Path()
+                ),
+                RouterTabDescriptor(
+                    id: "tab4",
+                    index: 4,
+                    title: "Tab 4",
+                    systemImage: "4.circle.fill",
+                    rootPath: Tab4Path()
                 )
             ]
         )
