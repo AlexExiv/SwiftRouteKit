@@ -90,6 +90,7 @@ public struct RouterTabsHost<Label: View>: View
         #else
         AnyRouterHost( router: tabs.Router( for: descriptor ), rootPath: descriptor.rootPath )
             .tabItem { label( descriptor ) }
+            .badge( descriptor.badge )
             .tag( descriptor.index )
         #endif
     }
@@ -196,10 +197,22 @@ private struct RouterSystemTabBar: UIViewRepresentable
                     image: UIImage( named: $0.systemImage ?? "" ) ?? UIImage( systemName: $0.systemImage ?? "circle" ),
                     tag: $0.index
                 )
+                item.badgeValue = $0.badge
                 return item
             }
 
             tabBar.setItems( items, animated: false )
+        }
+
+        if let items = tabBar.items
+        {
+            for descriptor in descriptors
+            {
+                if let item = items.first( where: { $0.tag == descriptor.index } )
+                {
+                    item.badgeValue = descriptor.badge
+                }
+            }
         }
 
         tabBar.selectedItem = tabBar.items?.first { $0.tag == selectedIndex }

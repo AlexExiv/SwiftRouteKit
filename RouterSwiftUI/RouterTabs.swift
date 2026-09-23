@@ -9,14 +9,16 @@ public struct RouterTabDescriptor: Identifiable
     public let title: String
     public let systemImage: String?
     public let rootPath: AnyRoutePath
+    public let badge: String?
 
-    public init<Path: RoutePath>( id: String, index: Int, title: String, systemImage: String? = nil, rootPath: Path )
+    public init<Path: RoutePath>( id: String, index: Int, title: String, systemImage: String? = nil, rootPath: Path, badge: String? = nil )
     {
         self.id = id
         self.index = index
         self.title = title
         self.systemImage = systemImage
         self.rootPath = AnyRoutePath( rootPath )
+        self.badge = badge
     }
 }
 

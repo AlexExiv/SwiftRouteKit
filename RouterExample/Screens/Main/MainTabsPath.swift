@@ -8,10 +8,13 @@ struct MainTabsPath: RoutePath, EmptyParamsPath
 }
 
 @Route( uri: "/" )
-final class MainTabsRouteController: RouteController<MainTabsPath, MainTabsView>
+final class MainTabsRouteController: RouteControllerVM<MainTabsPath, MainViewModelImpl, MainTabsView<MainViewModelImpl>>
 {
-    override func OnCreateView( path: MainTabsPath ) -> MainTabsView
+    override func OnCreateViewModel( path: MainTabsPath ) -> MainViewModelImpl
     {
-        MainTabsView()
+        MainViewModelImpl(
+            flowerService: FlowerDependencyContainer.shared.flowerService,
+            cartService: FlowerDependencyContainer.shared.cartService
+        )
     }
 }

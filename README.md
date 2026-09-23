@@ -634,6 +634,44 @@ final class MainTabsRouteController: RouteController<MainTabsPath, MainTabsView>
 }
 ```
 
+### Tab badges
+
+Pass an optional string to `RouterTabDescriptor`. `nil` hides the badge, while a non-empty value is shown by the tab bar.
+
+```swift
+RouterTabDescriptor(
+    id: "cart",
+    index: 1,
+    title: "Cart",
+    systemImage: "cart",
+    rootPath: CartPath(),
+    badge: cartItemCount > 0 ? "\(cartItemCount)" : nil
+)
+```
+
+`RouterSwiftUI` only renders the value. The application owns the state and can rebuild the descriptors when the value changes. On iOS the host uses `UITabBarItem.badgeValue`; on other supported platforms it uses SwiftUI `.badge`.
+
+The native iOS badge appearance can be configured in the application with `UITabBarItem.appearance()`:
+
+```swift
+#if os(iOS)
+UITabBarItem.appearance().badgeColor = .systemRed
+UITabBarItem.appearance().setBadgeTextAttributes(
+    [
+        .foregroundColor: UIColor.white,
+        .font: UIFont.preferredFont( forTextStyle: .caption2 )
+    ],
+    for: .normal
+)
+UITabBarItem.appearance().badgePositionAdjustment = UIOffset(
+    horizontal: 2,
+    vertical: -1
+)
+#endif
+```
+
+`badgePositionAdjustment` changes the badge position relative to its native tab item. Arbitrary placement, custom shapes, or per-tab SwiftUI layouts require replacing the native tab bar with a custom tab bar.
+
 ## Generated Registry
 
 The build plugin scans source files for:

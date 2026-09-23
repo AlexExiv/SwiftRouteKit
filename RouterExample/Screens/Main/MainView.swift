@@ -8,8 +8,16 @@
 import SwiftUI
 import RouterSwiftUI
 
-struct MainTabsView: RouterTabsView
+struct MainTabsView<ViewModel: MainViewModel>: RouterTabsView
 {
+    @StateObject
+    private var viewModel: ViewModel
+
+    init( viewModel: ViewModel )
+    {
+        _viewModel = StateObject( wrappedValue: viewModel )
+    }
+
     var body: some View
     {
         RouterTabsHost(
@@ -26,7 +34,8 @@ struct MainTabsView: RouterTabsView
                     index: 1,
                     title: "Корзина",
                     systemImage: "basket.fill",
-                    rootPath: CartPath()
+                    rootPath: CartPath(),
+                    badge: viewModel.inCartCount > 0 ? "\(viewModel.inCartCount)" : nil
                 ),
                 RouterTabDescriptor(
                     id: "tab2",
