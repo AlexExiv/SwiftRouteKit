@@ -13,7 +13,7 @@ open class RouterViewModel: ObservableObject
     {
     }
 
-    final func Prepare( router: any Router, resultProvider: ResultProvider )
+    public final func Prepare( router: any Router, resultProvider: ResultProvider )
     {
         self.router = router
         self.resultProvider = resultProvider

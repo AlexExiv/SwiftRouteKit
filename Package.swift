@@ -45,11 +45,6 @@ let package = Package(
             capability: .buildTool(),
             dependencies: ["RouterSwiftUIGenerator"],
             path: "RouterSwiftUIGeneratorPlugin"),
-        .target(
-            name: "RouterSwiftUISample",
-            dependencies: ["RouterSwiftUI"],
-            path: "RouterSwiftUISample",
-            plugins: ["RouterSwiftUIGeneratorPlugin"]),
         .testTarget(
             name: "RouterSwiftUITests",
             dependencies: ["RouterSwiftUI"],

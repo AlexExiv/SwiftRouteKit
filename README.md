@@ -651,26 +651,29 @@ RouterTabDescriptor(
 
 `RouterSwiftUI` only renders the value. The application owns the state and can rebuild the descriptors when the value changes. On iOS the host uses `UITabBarItem.badgeValue`; on other supported platforms it uses SwiftUI `.badge`.
 
-The native iOS badge appearance can be configured in the application with `UITabBarItem.appearance()`:
+On iOS, `RouterTabsHost` can apply a `UITabBarAppearance` directly to the concrete `UITabBar` created by the host:
 
 ```swift
 #if os(iOS)
-UITabBarItem.appearance().badgeColor = .systemRed
-UITabBarItem.appearance().setBadgeTextAttributes(
-    [
-        .foregroundColor: UIColor.white,
-        .font: UIFont.preferredFont( forTextStyle: .caption2 )
-    ],
-    for: .normal
-)
-UITabBarItem.appearance().badgePositionAdjustment = UIOffset(
-    horizontal: 2,
-    vertical: -1
+let appearance = UITabBarAppearance()
+appearance.configureWithTransparentBackground()
+
+appearance.stackedLayoutAppearance.normal.iconColor = .gray
+appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+    .foregroundColor: UIColor.gray
+]
+appearance.stackedLayoutAppearance.normal.badgeBackgroundColor = .blue
+
+RouterTabsHost(
+    descriptors: descriptors,
+    tabBarAppearance: appearance
 )
 #endif
 ```
 
-`badgePositionAdjustment` changes the badge position relative to its native tab item. Arbitrary placement, custom shapes, or per-tab SwiftUI layouts require replacing the native tab bar with a custom tab bar.
+The appearance is assigned to `standardAppearance` and, on iOS 15+, to `scrollEdgeAppearance` of the actual tab bar instance. It does not use `UITabBar.appearance()`.
+
+`UITabBarAppearance` controls colors, fonts, background, blur, and badge styling. Arbitrary badge placement or custom SwiftUI badge layouts require replacing the native tab bar with a custom tab bar.
 
 ## Generated Registry
 
@@ -709,10 +712,4 @@ Build tool plugin and generator:
 ```text
 RouterSwiftUIGeneratorPlugin/RouterSwiftUIGeneratorPlugin.swift
 RouterSwiftUIGenerator/main.swift
-```
-
-Sample routes:
-
-```text
-RouterSwiftUISample/SampleRoutes.swift
 ```
